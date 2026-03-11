@@ -1,14 +1,15 @@
-# Changelog
+# CHANGELOG
 
-All notable changes to this project will be documented in this file.
+## [2.0.0] — 2026-03-12
+### Major Update — File-System → PostgreSQL
+- B.A.S.E (Backup Agent Semantic Environment)
+- Agent Registry in PostgreSQL
+- Orpheus Monitor (automatische Überwachung)
+- TPM2-Verschlüsselung
+- Hardware-Security Monitoring
+- GitHub Deploy Key via NitroKey HSM
 
-## [1.0.0] - 2026-02-18
-
-### Added
-- SOUL.md Template
-- MEMORY.md Template
-- SESSION-STATE.md Template
-- 5 Training Sessions
-- WAL-Protokoll (Write-Ahead-Log)
-- Promotion-System
-
+## [1.0.0] — 2026-02-18
+- Initial Release
+- WAL-Protokoll
+- .md File-basiertes Memory-System

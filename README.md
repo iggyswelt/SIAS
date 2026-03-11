@@ -5,7 +5,7 @@
 **Ein persistentes Gedächtnis- und Lern-Framework für AI Agents**  
 **A persistent memory & learning framework for AI agents**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/iggyswelt/SIAS)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/iggyswelt/SIAS)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![OpenClaw](https://img.shields.io/badge/built%20for-OpenClaw-orange.svg)](https://openclaw.dev)
 [![YouTube](https://img.shields.io/badge/YouTube-%40iggyswelt-red.svg)](https://youtube.com/@iggyswelt)
