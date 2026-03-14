@@ -1,5 +1,5 @@
 # SIAS — Self-Improving Agent System
-### Version 1.3 | MetaMaus Implementation
+### Version 2.1 | MetaMaus Implementation
 
 ## Was ist SIAS?
 SIAS ist ein Framework für autonome, selbstverbessernde 
@@ -23,7 +23,7 @@ AI-Agenten auf eigener Hardware.
 - Security Layer: Nitrokey HSM + Vault
 - Dashboard: Flask
 
-## Memory Architecture (SIAS 1.3)
+## Memory Architecture (SIAS 2.3)
 Telegram/Chat → Daily Summary (23:00 Cron) → agent_logs (PostgreSQL) → MEMORY.md → OpenClaw Compaction (auto, 80k tokens) → Monthly Archive (PostgreSQL)
 
 ## Lizenz
