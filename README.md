@@ -5,7 +5,7 @@
 **Ein persistentes Gedächtnis- und Lern-Framework für AI Agents**  
 **A persistent memory & learning framework for AI agents**
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/iggyswelt/SIAS)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/iggyswelt/SIAS)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![OpenClaw](https://img.shields.io/badge/built%20for-OpenClaw-orange.svg)](https://openclaw.dev)
 [![YouTube](https://img.shields.io/badge/YouTube-%40iggyswelt-red.svg)](https://youtube.com/@iggyswelt)
@@ -271,9 +271,12 @@ Rate yourself: 1-10 on each criterion!
 
 ## 🗺️ Roadmap
 
-- [ ] **SIAS 1.1** — Automatic weekly reflection cron
-- [ ] **SIAS 1.2** — Dashboard integration (track learnings visually)
-- [ ] **SIAS 2.0** — Multi-agent support (shared MEMORY.md)
+- [x] **SIAS 1.1** — Automatic weekly reflection cron ✅
+- [x] **SIAS 1.2** — Dashboard integration (track learnings visually) ✅
+- [x] **SIAS 2.0** — Multi-agent support (PostgreSQL memory layer) ✅
+- [x] **SIAS 2.1** — Vision Stack + Browser Crawler + 9 Agents ✅
+- [ ] **SIAS 2.2** — MCP Integration
+- [ ] **SIAS 3.0** — Local LLM Support (RTX 3060)
 - [ ] **OpenClaw Plugin** — Native SIAS integration
 
 ---
