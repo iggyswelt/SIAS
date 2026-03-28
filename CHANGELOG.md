@@ -1,25 +1,41 @@
 # CHANGELOG
 
-## [2.1.0] — 2026-03-19
-### Major Update — Vision, Browser Crawler, Team Mindset
+## [2.1.0] — 2026-03-28
+### Major Rebuild — System Restore, Token Strategy, Cleanup
 
 **New Features:**
-- Browser-Crawler mit Playwright (JS-heavy Seiten)
-- Self-Feeding Loop — Crawler generiert eigene Tasks
-- Dashboard R4 — Logs gefiltert, Rheingold Live Widget
-- Hyperopt Marathon — 22TB HDD, 40 parallel jobs
-- Vision Stack — z.ai Vision + alicloud/qwen-vl
-- Team Mindset — proaktiv, keine Leerlauf-Phasen
-- ADM-Workflow — API-Key-Austausch permanent
-- 9 spezialisierte Agents
+- Multi-Agent System mit 9 spezialisierten Agents
+  - metamaus (Teamleader), apollon (Code), athene (Trading)
+  - rheingold (Investigativ), pythia (Vision), hermes (Scraper)
+  - hestia (YouTube), orpheus (Backup), zerberus (Security)
+- Dashboard v1.0 (Port 5000 PROD / 5001 DEV)
+- Rheingold IFG-System (994 Findings, NGO-Netzwerk Köln dokumentiert)
+- Pythia Vision Integration (qwen3-vl via Alicloud)
+- Hyperopt Marathon (Athene + Freqtrade auf Cronos)
+- PostgreSQL als zentrales Memory (105 Tabellen)
+- Agent Templates in DB (agent_templates Tabelle)
+- Token-Tier Strategie (Tier 1/2/3 — spart bis 60% Token-Kosten)
+- Secrets via localfile (sauber, eine Quelle — kein Hardcoding mehr!)
+- Model-Protection Regel (openclaw.json READ ONLY für alle Agents)
 
 **Architecture:**
-- 8 Agents: Apollon, Athena, Hermes, Rheingold, Zerberus, Hestia, Orpheus, Pythia
-- PostgreSQL: learnings, memory, rheingold_findings, athena_trades, hestia_comments, vault
-- Server: metamaus, Cronos, NAS, DEMETER
+- 9 Agents mit Core-Files (IDENTITY, BOOTSTRAP, MEMORY, HEARTBEAT, SOUL, TOOLS, USER, AGENTS)
+- PostgreSQL: agent_knowledge, rheingold_findings, athena_trades, youtube_comments, zerberus_tasks
+- Server: metamaus (192.168.23.170), RedQueen (192.168.23.101), NAS (192.168.23.104)
+- Cronos: OFFLINE bis auf weiteres (GPU-Kabel fehlt — PCIe 8-Pin)
+- Secrets: /home/iggy/.openclaw/secrets.json (localfile provider)
+
+**Cleanup (2026-03-28):**
+- 16 GB Speicher freigeschaufelt
+- Alte Cache-Dateien (npm, Homebrew, ms-playwright, whisper)
+- Ungenutzte Go-Verzeichnisse
+- Veraltete Wekan-DB (37 Tage inaktiv)
+- Legacy Workspace Archive
 
 **Breaking Changes:**
-- RedQueen (192.168.23.101) DEPRECATED — nicht mehr nutzen!
+- Cronos (192.168.23.80) OFFLINE — GPU nicht verfügbar
+- Keine lokale RTX 3060 Fallback bis auf weiteres
+- Alle Agents nutzen jetzt MiniMax/alicloud als Primary, kein Cronos mehr
 
 ---
 
