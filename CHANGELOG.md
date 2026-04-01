@@ -52,3 +52,24 @@
 - Initial Release
 - WAL-Protokoll
 - .md File-basiertes Memory-System
+
+## [2.2.1] — 2026-04-01 — Cleanup Sprint Final
+
+### Infrastruktur
+- .openclaw vollständig aufgeräumt (210 MB freigegeben)
+- Scripts zu Agent-Ordnern migriert
+- Checkpoint-System aktiv (event-driven, 7d Rolling)
+- DB-Rechte scraper gefixt (pg_dump funktioniert)
+- SSH Config bereinigt (sias_deploy_key aktiv)
+
+### Agents
+- Alle 9 Agents: Core-Files konsolidiert & deployed
+- metamaus: Rollengrenze schärfer (kein Bash selbst)
+
+### Features
+- SIAS Research Skill v1 (ifg/ngo/mail/rapid)
+- Mail-Watcher Rheingold (30min, investigativ@abbydon.com)
+
+### Geplant (v2.3.0)
+- Embedding-Provider für memorySearch
+- Dashboard-Ordner aufräumen
