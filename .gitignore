@@ -1,0 +1,78 @@
+# === CRITICAL — NEVER PUSH ===
+.secrets/
+secrets.json
+vault/
+credentials/
+identity/
+devices/
+openclaw.json*
+exec-approvals.json
+
+# Runtime data
+.openclaw/
+agents/*/.openclaw/
+flows/
+tasks/
+subagents/
+cron/
+cache/
+update-check.json
+logs/
+
+# Media & large binary data
+media/
+rheingold_data/
+
+# Memory & Sessions
+memory/
+memory.legacy/
+sessions/
+agent/
+
+# Backup artifacts
+backups/
+
+# Skills (installed, not custom)
+skills/
+
+# SSH & Keys
+*.key
+*.pem
+*.enc
+*.gpg
+.ssh/
+
+# Sensitive scripts (contain hardcoded credentials)
+agents/hermes/scripts/
+agents/hestia/scripts/
+agents/orpheus/scripts/
+agents/zerberus/scripts/
+agents/athene/scripts/
+
+# Dashboard (embedded IPs/passwords)
+dashboard/
+
+# Completions
+completions/
+
+# Embedded git repos
+SIAS/
+agents/metamaus/
+skills/last30days/
+
+# OS/Editor
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Environment
+.env
+.env.*
+
+# Telegram offsets
+telegram/
+agents/apollon/scripts/
+agora/scripts/load_vault_env.sh
