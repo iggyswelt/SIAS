@@ -1,0 +1,2841 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐭 metamaus Command Center - abydon.hq</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* CYBER GRID BACKGROUND */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            background: #0a0a0a; 
+            color: #fff; 
+            min-height: 100vh;
+            background-image: 
+                linear-gradient(0deg, transparent 24%, rgba(0, 255, 136, .03) 25%, rgba(0, 255, 136, .03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 136, .03) 75%, rgba(0, 255, 136, .03) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(0, 255, 136, .03) 25%, rgba(0, 255, 136, .03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 136, .03) 75%, rgba(0, 255, 136, .03) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0, 255, 136, 0.02) 0px, transparent 1px, transparent 40px),
+                        repeating-linear-gradient(90deg, rgba(0, 255, 136, 0.02) 0px, transparent 1px, transparent 40px);
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        /* FIXED PRICE TICKER */
+        .price-ticker {
+            position: fixed;
+            top: 0;
+            right: 0;
+            display: flex;
+            gap: 20px;
+            padding: 12px 25px;
+            background: rgba(10, 10, 10, 0.95);
+            border-bottom: 2px solid #00ff88;
+            border-left: 2px solid #00ff88;
+            border-bottom-left-radius: 15px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.2);
+        }
+        
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .ticker-icon {
+            font-size: 18px;
+        }
+        
+        .ticker-value {
+            font-family: 'Courier New', monospace;
+            color: #00ff88;
+            font-weight: bold;
+            font-size: 15px;
+        }
+        
+        .ticker-time {
+            color: #888;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-left: 10px;
+            padding-left: 15px;
+            border-left: 1px solid #333;
+        }
+        
+        /* HEADER */
+        .header { 
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            font-size: 32px;
+        }
+        
+        .logo-text {
+            font-size: 28px;
+            color: #00ff88;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+            margin-left: 42px;
+        }
+        
+        /* TABS */
+        .tabs { display: flex; background: rgba(0,0,0,0.8); border-bottom: 2px solid #00ff88; }
+        .tab { padding: 15px 30px; cursor: pointer; border-bottom: 3px solid transparent; color: #888; transition: all 0.3s; }
+        .tab:hover { color: #00ff88; background: rgba(0, 255, 136, 0.1); }
+        .tab.active { color: #00ff88; border-bottom-color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+        
+        /* CONTENT */
+        .content { padding: 20px; max-width: 1400px; margin: 0 auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* CYBER CARDS */
+        .card { 
+            background: rgba(26, 26, 26, 0.95); 
+            border-radius: 12px; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            border-color: #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+        
+        .card h2 { color: #00ff88; margin-bottom: 15px; }
+        
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        
+        /* Hero Stats - 6 columns */
+        .metrics.hero-stats { 
+            grid-template-columns: repeat(6, 1fr); 
+        }
+        
+        @media (max-width: 1200px) {
+            .metrics.hero-stats { grid-template-columns: repeat(3, 1fr); }
+        }
+        
+        @media (max-width: 768px) {
+            .metrics.hero-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        .metric-card { 
+            background: rgba(0, 255, 136, 0.05); 
+            padding: 20px; 
+            border-radius: 8px; 
+            text-align: center;
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            border-color: #00ff88;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.2);
+        }
+        
+        .metric-value { font-size: 2em; color: #00ff88; font-weight: bold; }
+        .metric-label { color: #888; font-size: 0.9em; margin-top: 5px; }
+        
+        /* BUTTONS */
+        .btn { 
+            background: #1a1a1a; 
+            color: #00ff88; 
+            border: 1px solid #00ff88; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover { 
+            background: #00ff88; 
+            color: #000; 
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        
+        .btn-location {
+            background: #1a1a1a;
+            color: #00ff88;
+            border: 1px solid #444;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-right: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-location:hover {
+            background: #333;
+            border-color: #00ff88;
+        }
+        
+        .btn-secondary { background: #333; color: #fff; border-color: #444; }
+        .btn-secondary:hover { background: #444; border-color: #00ff88; }
+        
+        /* TASKBOARD */
+        .taskboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .task-column { background: rgba(0, 255, 136, 0.03); border-radius: 12px; padding: 15px; border: 1px solid #333; }
+        .task-column h3 { color: #00ff88; margin-bottom: 15px; }
+        .task-card { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid #00ff88; }
+        
+        .demo-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 3px solid #00ff88; margin-bottom: 10px; }
+        .news-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 3px solid #ff8800; margin-bottom: 10px; cursor: pointer; }
+        .news-item:hover { background: rgba(255,255,255,0.1); }
+        
+        .yt-subtab { display: none; }
+        
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: #1a1a1a; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; border: 1px solid #00ff88; }
+        
+        input, select, textarea { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; border-radius: 6px; color: #fff; margin-bottom: 10px; }
+        input:focus, select:focus, textarea:focus { border-color: #00ff88; outline: none; }
+        
+        .ticker-item span { color: #00ff88; font-weight: bold; }
+        .ticker-time { color: #ffd700; font-family: monospace; font-size: 16px; margin-left: 20px; padding-left: 20px; border-left: 1px solid #333; }
+        .price-up { color: #00ff88 !important; }
+        .price-down { color: #ff4757 !important; }
+        .filter-btn { padding: 8px 16px; margin-right: 5px; background: #1a1f2e; color: #a0a0ff; border: 1px solid #00ff9d; border-radius: 5px; cursor: pointer; }
+        .filter-btn:hover { background: #00ff9d; color: black; }
+        #mails-table td, #mails-table th { padding: 10px; border-bottom: 1px solid #333; }
+        #mails-table tr:hover { background: #1a1f2e; }
+        .status-entwurf { color: #ffa500; }
+        .status-bereit { color: #00ff9d; }
+        .status-gesendet { color: #888; }
+        
+        /* HIMALAYA MAIL SUBTAB STYLES */
+        .himalaya-subtab {
+            padding: 10px 20px;
+            cursor: pointer;
+            color: #888;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .himalaya-subtab:hover {
+            color: #00ff9d;
+        }
+        .himalaya-subtab.active {
+            color: #00ff88;
+            border-bottom: 3px solid #00ff88;
+            font-weight: bold;
+        }
+        .himalaya-mail-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #222;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .himalaya-mail-item:hover {
+            background: #111133;
+        }
+        .himalaya-mail-item.read {
+            color: #888;
+        }
+        .himalaya-mail-item.unread {
+            color: #fff;
+            border-left: 3px solid #00ff88;
+        }
+        .himalaya-mail-from {
+            font-weight: bold;
+            color: #00ff9d;
+            margin-bottom: 2px;
+        }
+        .himalaya-mail-subject {
+            font-size: 15px;
+            color: #e0e0ff;
+            margin-bottom: 2px;
+        }
+        .himalaya-mail-date {
+            font-size: 12px;
+            color: #666;
+        }
+        .himalaya-mail-detail {
+            margin-top: 15px;
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .himalaya-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        /* NETWORK TAB STYLES */
+        #network { margin-top: 0 !important; padding-top: 0 !important; }
+        #network h2 { margin-top: 10px !important; }
+        
+        .device-grid { 
+            display: grid !important; 
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important; 
+            gap: 20px !important; 
+            padding: 15px !important;
+            width: 100% !important;
+            min-height: auto !important;
+        }
+        
+        /* DEVICE CARDS - consolidated */
+        .device-card { 
+            background: #0f1624; 
+            border: 1px solid #00ff9d33; 
+            border-radius: 10px; 
+            padding: 16px; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            width: 100% !important;
+            min-height: 180px !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            display: inline-block !important;
+            position: relative;
+            z-index: 1;
+        }
+        .device-card:hover { 
+            border-color: #00ff9d; 
+            box-shadow: 0 0 25px #00ff9d60; 
+            transform: scale(1.02); 
+            z-index: 10; 
+        }
+        .device-card::before { content: none !important; }
+        .device-card::after { content: none !important; }
+        .card-ip { font-size: 1.2em; color: #00ff9d; font-weight: bold; }
+        .card-host { color: #a0a0ff; font-size: 0.9em; }
+        .card-vendor { color: #888; font-size: 0.8em; margin-top: 4px; }
+        .card-mac { font-size: 0.85em; color: #a0a0ff; margin-top: 4px; }
+        .card-ports { color: #ffa500; font-size: 0.75em; margin-top: 4px; }
+        .card-notes { font-size: 0.85em; color: #ff9d00; margin-top: 4px; font-style: italic; }
+        .status-online { color: #00ff9d; font-weight: bold; }
+        .status-offline { color: #ff4d4d; font-weight: bold; }
+        
+        /* HIDE REDUNDANT BULLETS/DOTS */
+        .device-card::before, .device-card::after,
+        .tab-content::before, .tab-content::after,
+        .card::before, .card::after { content: none !important; }
+        
+        /* NETWORK MODAL - specific overrides */
+        #network-modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.85); 
+            align-items: center; justify-content: center; 
+            z-index: 9999 !important; 
+        }
+        #network-modal.active { display: flex; }
+        
+        /* NETWORK MODAL CONTENT */
+        #network-modal .modal-content { 
+            background: #0f1624; 
+            border: 1px solid #00ff9d; 
+            border-radius: 12px; 
+            padding: 24px; 
+            max-width: 500px; 
+            width: 90%; 
+            color: #e0e0ff; 
+        }
+        #network-modal .modal-close { 
+            float: right; 
+            font-size: 24px; 
+            cursor: pointer; 
+            color: #ff4d4d; 
+            padding: 5px 10px; 
+            border: 1px solid #ff4d4d; 
+            border-radius: 4px; 
+        }
+        #network-modal .modal-close:hover { background: #ff4d4d; color: white; }
+        
+        /* LOG TAB STYLES */
+        .log-btn {
+         background: #1a1a2e;
+         color: #00ff88;
+         border: 1px solid #00ff88;
+         padding: 8px 16px;
+         margin: 4px;
+         border-radius: 6px;
+         cursor: pointer;
+         font-size: 15px;
+         transition: all 0.2s;
+        }
+        .log-btn:hover, .log-btn.active {
+         background: #00ff88;
+         color: #000;
+         font-weight: bold;
+        }
+        .log-btn.zerberus { border-color: #4488ff; color: #4488ff; }
+        .log-btn.rheingold { border-color: #ffd700; color: #ffd700; }
+        .log-btn.hermes { border-color: #ff88aa; color: #ff88aa; }
+        .log-btn.hestia { border-color: #aa88ff; color: #aa88ff; }
+        .log-btn.orpheus { border-color: #88ffaa; color: #88ffaa; }
+        .log-table td { font-size: 15px; padding: 10px 12px; }
+        .log-table th { font-size: 16px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <!-- FIXED PRICE TICKER -->
+    <div class="price-ticker">
+        <div class="ticker-item">
+            <span class="ticker-icon">₿</span>
+            <span id="ticker-btc" class="ticker-value">Loading...</span>
+            <span id="ticker-btc-chg" class="ticker-change"></span>
+        </div>
+        <div class="ticker-item">
+            <span class="ticker-icon">◎</span>
+            <span id="ticker-sol" class="ticker-value">Loading...</span>
+            <span id="ticker-sol-chg" class="ticker-change"></span>
+        </div>
+        <div class="ticker-item">
+            <span class="ticker-icon">🥇</span>
+            <span id="ticker-gold" class="ticker-value">Loading...</span>
+            <span id="ticker-gold-chg" class="ticker-change"></span>
+        </div>
+        <div class="ticker-item">
+            <span class="ticker-icon">🥈</span>
+            <span id="ticker-silver" class="ticker-value">Loading...</span>
+            <span id="ticker-silver-chg" class="ticker-change"></span>
+        </div>
+        <div class="ticker-time" id="current-time">--:--:--</div>
+    </div>
+    
+    <div class="header">
+        <div class="logo">
+            <span class="logo-icon">🐭</span>
+            <span class="logo-text">metamaus Command Center</span>
+        </div>
+    </div>
+    <div class="tabs">
+        <div class="tab" onclick="switchTab('dashboard', this)">📊 Dashboard</div>
+        <div class="tab" onclick="switchTab('demos', this)">📅 Demos</div>
+        <div class="tab" onclick="switchTab('tasks', this)">⚡ Tasks</div>
+        <div class="tab" onclick="switchTab('youtube', this)">📺 YouTube</div>
+        <div class="tab" onclick="switchTab('news', this)">📰 News</div>
+        <div class="tab" onclick="switchTab('agents', this)">🤖 Agents</div>
+        <div class="tab active" onclick="switchTab('trading', this)">💹 Trading</div>
+        <div class="tab" onclick="switchTab('rheingold', this)">🔍 Rheingold</div>
+        <div class="tab" onclick="switchTab('ifg', this)">📨 IFG</div>
+        <div class="tab" onclick="switchTab('network', this)">🌐 Network</div>
+        <div class="tab" onclick="switchTab('mails', this)">📧 Mails</div>
+        <div class="tab" onclick="switchTab('logs', this)">📋 Logs</div>
+    </div>
+
+    <div class="content">
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard" class="tab-content">
+            <div class="card">
+                <div class="metrics">
+                    <div class="metric-card" onclick="switchTab('demos', this)">
+                        <div class="metric-value" id="db-size">59 MB</div>
+                        <div class="metric-label">💾 Datenbank</div>
+                        <div class="metric-sub" id="db-growth" style="font-size:10px;color:#888">Lädt...</div>
+                    </div>
+                    <div class="metric-card" onclick="switchTab('tasks', this)">
+                        <div class="metric-value" id="task-count">-</div>
+                        <div class="metric-label">Offene Tasks</div>
+                    </div>
+                    <div class="metric-card" style="cursor:pointer" onclick="switchTab('logs', this)">
+                        <div class="metric-value" id="log-count">-</div>
+                        <div class="metric-label">📋 Letzte Logs</div>
+                    </div>
+                </div>
+                
+                <!-- LOGS KACHEL -->
+                <div class="card" style="margin-top:15px;padding:12px">
+                    <div style="font-size:11px;color:#4ade80;letter-spacing:2px;margin-bottom:10px">📋 LETZTE LOGS</div>
+                    <div id="log-list" style="display:flex;flex-direction:column;gap:4px"></div>
+                </div>
+                
+                <!-- LOG MODAL -->
+                <div id="log-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
+                    <div style="background:#0f1a0f;border:1px solid #1a3a1a;border-radius:8px;padding:24px;max-width:600px;width:90%;position:relative;">
+                        <button onclick="document.getElementById('log-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#4ade80;font-size:20px;cursor:pointer">×</button>
+                        <div style="font-size:11px;color:#4ade80;letter-spacing:2px;margin-bottom:12px">LOG DETAIL</div>
+                        <div id="log-modal-text" style="font-family:monospace;font-size:13px;color:#e2e8f0;line-height:1.7;white-space:pre-wrap"></div>
+                    </div>
+                </div>
+                
+                <div class="metrics hero-stats" style="margin-top:15px">
+                    <div class="metric-card">
+                        <div class="metric-value" id="btc-price">-</div>
+                        <div class="metric-label">₿ BTC</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="sol-price">-</div>
+                        <div class="metric-label">◎ SOL</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="gold-price">-</div>
+                        <div class="metric-label">🥇 Gold</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="silver-price">-</div>
+                        <div class="metric-label">🥈 Silver</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="dax-price">-</div>
+                        <div class="metric-label">DAX</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="sp500-price">-</div>
+                        <div class="metric-label">S&P 500</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- GRIDSTACK WIDGETS -->
+            <div class="grid-widgets" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 20px;">
+                <!-- OpenClaw Stats -->
+                <div class="card">
+                    <h3>🤖 OpenClaw Stats</h3>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                        <div style="background: rgba(0,255,136,0.1); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #00ff88;" id="oc-messages">-</div>
+                            <div style="color: #888; font-size: 12px;">Messages</div>
+                        </div>
+                        <div style="background: rgba(0,255,136,0.1); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #00ff88;" id="oc-tools">-</div>
+                            <div style="color: #888; font-size: 12px;">Tool Calls</div>
+                        </div>
+                        <div style="background: rgba(0,255,136,0.1); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #00ff88;" id="oc-tokens">-</div>
+                            <div style="color: #888; font-size: 12px;">Tokens</div>
+                        </div>
+                        <div style="background: rgba(0,255,136,0.1); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #00ff88;" id="oc-cache">-</div>
+                            <div style="color: #888; font-size: 12px;">Cache Hit</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Top Models -->
+                <div class="card">
+                    <h3>📊 Top Models</h3>
+                    <div id="top-models" style="margin-top: 10px; font-size: 13px;">
+                        <div style="padding: 8px; border-bottom: 1px solid #333;">Loading...</div>
+                    </div>
+                </div>
+                
+                <!-- Top Agent -->
+                <div class="card" style="text-align: center;">
+                    <h3>🏆 Top Agent</h3>
+                    <div style="margin-top: 15px;">
+                        <div style="font-size: 48px;">🐭</div>
+                        <div style="font-size: 20px; font-weight: bold; color: #00ff88;">metamaus</div>
+                        <div style="color: #888;">114.8M tokens</div>
+                    </div>
+                </div>
+                
+                <!-- System Health -->
+                <div class="card">
+                    <h3>💚 System Health</h3>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                        <div style="background: rgba(0,255,136,0.1); padding: 10px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 14px; font-weight: bold; color: #00ff88;" id="sys-uptime">-</div>
+                            <div style="color: #888; font-size: 11px;">Uptime</div>
+                        </div>
+                        <div style="background: rgba(0,255,136,0.1); padding: 10px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 14px; font-weight: bold; color: #00ff88;" id="sys-cpu">-</div>
+                            <div style="color: #888; font-size: 11px;">CPU</div>
+                        </div>
+                        <div style="background: rgba(0,255,136,0.1); padding: 10px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 14px; font-weight: bold; color: #00ff88;" id="sys-ram">-</div>
+                            <div style="color: #888; font-size: 11px;">RAM</div>
+                        </div>
+                        <div style="background: rgba(0,255,136,0.1); padding: 10px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 14px; font-weight: bold; color: #00ff88;" id="sys-disk">-</div>
+                            <div style="color: #888; font-size: 11px;">Disk</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEMOS TAB -->
+        <div id="demos" class="tab-content">
+            <div class="card">
+                <h2>📅 Demo Kalender Köln</h2>
+                <div style="margin-bottom:15px">
+                    <button class="btn" onclick="filterDemos('all')" id="btn-all">Alle</button>
+                    <button class="btn" onclick="filterDemos('AfD')" id="btn-afd">AfD</button>
+                    <button class="btn" onclick="filterDemos('Antifa')" id="btn-antifa">Antifa</button>
+                    <button class="btn" onclick="filterDemos('Sonstiges')" id="btn-sonstiges">Sonstiges</button>
+                    <button class="btn" onclick="filterDemos('Archiv')" id="btn-archiv">Archiv</button>
+                </div>
+                <div style="margin-bottom:15px">
+                    <span style="color:#888;margin-right:10px">Ort:</span>
+                    <button class="btn btn-location" onclick="filterDemosByLocation('all')" id="loc-all">Alle</button>
+                    <button class="btn btn-location" onclick="filterDemosByLocation('Köln')" id="loc-koeln">Köln</button>
+                    <button class="btn btn-location" onclick="filterDemosByLocation('NRW')" id="loc-nrw">NRW</button>
+                    <button class="btn btn-location" onclick="filterDemosByLocation('Berlin')" id="loc-berlin">Berlin</button>
+                    <button class="btn btn-location" onclick="filterDemosByLocation('Düsseldorf')" id="loc-duesseldorf">Düsseldorf</button>
+                    <button class="btn btn-location" onclick="filterDemosByLocation('Bonn')" id="loc-bonn">Bonn</button>
+                </div>
+                <button class="btn" onclick="loadDemos()">🔄 Refresh</button>
+                <div id="demos-list" class="demo-list"><div>Loading...</div></div>
+            </div>
+        </div>
+
+        <!-- TASKS TAB -> Workflow / Task Control Center -->
+        <div id="tasks" class="tab-content">
+            <div class="card">
+                <h2 style="color:#00ff88;margin-bottom:5px">⚡ Task Control Center</h2>
+                <p style="color:#888;margin:0 0 15px 0;font-size:0.9em">Live aus agent_tasks — Tasks einwerfen, stoppen, verfolgen</p>
+
+                <!-- Counters -->
+                <div id="workflow-counters" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px"></div>
+
+                <!-- Quick Add + Filter Row -->
+                <div style="display:flex;gap:10px;align-items:center;margin-bottom:15px;flex-wrap:wrap">
+                    <button class="btn" onclick="openAgentTaskModal()" style="background:#00aa55;font-weight:bold">⚡＋ Task einwerfen</button>
+                    <select id="workflow-agent-filter" onchange="loadAgentTasks()" style="padding:8px;border-radius:6px;background:#222;color:#fff;border:1px solid #444">
+                        <option value="all">Alle Agenten</option>
+                        <option value="apollon">🔷 Apollon</option>
+                        <option value="athene">📈 Athene</option>
+                        <option value="hermes">📡 Hermes</option>
+                        <option value="hestia">🏠 Hestia</option>
+                        <option value="rheingold">🦅 Rheingold</option>
+                        <option value="zerberus">🛡 Zerberus</option>
+                        <option value="orpheus">🎵 Orpheus</option>
+                        <option value="metamaus">🐭 Metamaus</option>
+                    </select>
+                    <select id="workflow-status-filter" onchange="loadAgentTasks()" style="padding:8px;border-radius:6px;background:#222;color:#fff;border:1px solid #444">
+                        <option value="all">Alle Status</option>
+                        <option value="pending">⏸ Pending</option>
+                        <option value="in_progress">▶ In Progress</option>
+                        <option value="done">✅ Done</option>
+                        <option value="stopped">🛑 Gestoppt</option>
+                    </select>
+                    <button class="btn" onclick="loadAgentTasks()" style="background:#333">🔄 Refresh</button>
+                    <label style="color:#aaa;font-size:0.85em;display:flex;align-items:center;gap:4px">
+                        <input type="checkbox" id="workflow-autorefresh" style="width:auto" onchange="toggleAutoRefresh()"> Auto-Refresh (10s)
+                    </label>
+                </div>
+
+                <!-- Workflow Table -->
+                <div id="workflow-table-container" style="overflow-x:auto">
+                    <table id="workflow-table" style="width:100%;border-collapse:collapse;font-size:0.9em">
+                        <thead>
+                            <tr style="background:#0f1624;text-align:left">
+                                <th style="padding:10px;color:#00ff88;border-bottom:1px solid #333">ID</th>
+                                <th style="padding:10px;color:#00ff88;border-bottom:1px solid #333">Agent</th>
+                                <th style="padding:10px;color:#00ff88;border-bottom:1px solid #333;max-width:400px">Task</th>
+                                <th style="padding:10px;color:#00ff88;border-bottom:1px solid #333">Prio</th>
+                                <th style="padding:10px;color:#00ff88;border-bottom:1px solid #333">Status</th>
+                                <th style="padding:10px;color:#00ff88;border-bottom:1px solid #333">Fortschritt</th>
+                                <th style="padding:10px;color:#00ff88;border-bottom:1px solid #333;white-space:nowrap">Erstellt</th>
+                                <th style="padding:10px;color:#00ff88;border-bottom:1px solid #333">Aktion</th>
+                            </tr>
+                        </thead>
+                        <tbody id="workflow-tbody">
+                            <tr><td colspan="8" style="padding:30px;text-align:center;color:#666">Laden...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- YOUTUBE TAB -->
+        <div id="youtube" class="tab-content">
+            <div class="card">
+                <h2>📺 YouTube</h2>
+                <div style="margin-bottom:15px">
+                    <button class="btn" onclick="showYouTubeSubtab('stats')" id="yt-btn-stats">📊 Stats</button>
+                    <button class="btn" onclick="showYouTubeSubtab('community')" id="yt-btn-community">👥 Community</button>
+                    <button class="btn" onclick="showYouTubeSubtab('comments')" id="yt-btn-comments">💬 Kommentare</button>
+                </div>
+                
+                <!-- Stats Subtab -->
+                <div id="yt-stats" class="yt-subtab">
+                    <button class="btn" onclick="loadYouTubeStats()">🔄 Refresh</button>
+                    <div id="yt-stats-content" style="margin-top:15px">Loading...</div>
+                </div>
+                
+                <!-- Community Subtab -->
+                <div id="yt-community" class="yt-subtab" style="display:none">
+                    <div style="margin-bottom:10px">
+                        <span id="yt-community-stats">Lade...</span>
+                    </div>
+                    <button class="btn" onclick="loadYouTubeCommunity()">🔄 Refresh</button>
+                    <button class="btn" onclick="showYouTubeSubtab('vip')" id="yt-btn-vip">⭐ VIP Kommentare</button>
+                    <button class="btn" onclick="showYouTubeSubtab('allcomments')" id="yt-btn-allcomments">💬 Alle Kommentare</button>
+                    <div id="yt-community-content" style="margin-top:15px">Loading...</div>
+                </div>
+                
+                <!-- VIP Comments Subtab -->
+                <div id="yt-vip" class="yt-subtab" style="display:none">
+                    <h3>⭐ VIP Kommentare (Top 100 User)</h3>
+                    <div id="yt-vip-content">Loading...</div>
+                </div>
+                
+                <!-- All Comments Subtab -->
+                <div id="yt-allcomments" class="yt-subtab" style="display:none">
+                    <h3>💬 Alle Kommentare</h3>
+                    <div id="yt-allcomments-content">Loading...</div>
+                </div>
+                
+                <!-- Comments Subtab -->
+                <div id="yt-comments" class="yt-subtab" style="display:none">
+                    <div style="margin-bottom:10px">
+                        <span id="yt-progress">Fortschritt: wird geladen...</span>
+                    </div>
+                    <button class="btn" onclick="loadYouTubeComments()">🔄 Kommentare laden</button>
+                    <button class="btn" onclick="generateReplies()">✍️ Antwort-Vorschläge</button>
+                    <div id="yt-comments-content" style="margin-top:15px">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="notification-toast" style="display:none;position:fixed;bottom:20px;right:20px;background:#1a1a2e;border:1px solid #00ff88;padding:15px 25px;border-radius:8px;z-index:2000;color:#fff;font-size:14px"></div>
+        
+        <!-- Report Modal -->
+        <div id="report-modal" class="modal" onclick="this.style.display='none'" style="display:none;align-items:center;justify-content:center">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width:700px">
+                <span onclick="document.getElementById('report-modal').style.display='none'" style="float:right;font-size:28px;cursor:pointer;color:#888">&times;</span>
+                <div id="report-content" style="color:#fff;margin-top:20px;max-width:800px;margin-left:auto;margin-right:auto;"></div>
+            </div>
+        </div>
+        
+        <!-- AGENTS TAB -->
+        <div id="notification-toast" style="display:none;position:fixed;bottom:20px;right:20px;background:#1a1a2e;border:1px solid #00ff88;padding:15px 25px;border-radius:8px;z-index:2000;color:#fff;font-size:14px"></div>
+        <div id="news" class="tab-content">
+            <div class="card">
+                <h2>📰 News</h2>
+                <div style="margin-bottom:15px; display:flex; flex-wrap:wrap; gap:8px; align-items:center">
+                    <div style="display:flex; gap:8px; flex-wrap:wrap">
+                        <button class="btn" onclick="filterNews('all')" id="btn-news-all">Alle</button>
+                        <button class="btn" onclick="filterNews('politik')" id="btn-news-politik">Politik</button>
+                        <button class="btn" onclick="filterNews('afd')" id="btn-news-afd">AfD</button>
+                        <button class="btn" onclick="filterNews('popkultur')" id="btn-news-popkultur">Popkultur</button>
+                    </div>
+                    <div style="width:1px;height:24px;background:#333;margin:0 8px"></div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap">
+                        <button class="btn" onclick="loadNews('relevance')" id="btn-news-relevance">🔥 Wichtigste</button>
+                        <button class="btn" onclick="loadNews('vogue')" id="btn-news-vogue" style="border-color:#ff4444">🎭 Vogue-Filter</button>
+                    </div>
+                    <button class="btn" onclick="loadNews()" style="margin-left:auto">🔄 Refresh</button>
+                </div>
+                <div style="margin-bottom:12px">
+                    <input type="text" id="news-search" placeholder="🔍 News durchsuchen..." 
+                           style="width:100%;padding:9px 14px;border-radius:8px;background:#1a1a2e;color:#fff;border:1px solid #333;font-size:0.9em"
+                           oninput="filterNewsSearch(this.value)">
+                </div>
+                <div id="news-list" class="news-list" style="margin-top:15px"></div>
+            </div>
+        </div>
+
+        <!-- AGENTS TAB -->
+        <div id="agents" class="tab-content">
+            <div class="card">
+                <h2>🐭 AGENT CONTROL CENTER</h2>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:15px;margin-top:20px">
+                    
+                    <!-- RHEINGOLD -->
+                    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px;border-radius:12px;border:1px solid #ff4757">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:15px">
+                            <span style="font-size:28px">🦅</span>
+                            <div>
+                                <strong style="color:#ff4757;font-size:18px">RHEINGOLD</strong>
+                                <div style="color:#888;font-size:12px">Investigative Research</div>
+                            </div>
+                            <span style="margin-left:auto;background:#ff4757;color:#000;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold">✅ ACTIVE</span>
+                        </div>
+                        <div style="color:#ccc;font-size:13px;margin-bottom:10px">
+                            <div>🎯 Findings: <span id="rheingold-findings" style="color:#ff4757;cursor:pointer" onclick="switchTab('rheingold', this)">71K+</span> <span style="font-size:10px;color:#64748b">(DB live)</span></div>
+                            <div>📦 Model: <span style="color:#00ff88">qwen3.6-plus</span></div>
+                        </div>
+                        <button class="btn" onclick="switchTab('rheingold', this)">🔍 Öffnen</button>
+                    </div>
+
+                    <!-- HESTIA -->
+                    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px;border-radius:12px;border:1px solid #ff6b6b">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:15px">
+                            <span style="font-size:28px">🔥</span>
+                            <div>
+                                <strong style="color:#ff6b6b;font-size:18px">HESTIA</strong>
+                                <div style="color:#888;font-size:12px">YouTube Community</div>
+                            </div>
+                            <span style="margin-left:auto;background:#ff6b6b;color:#000;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold">✅ ACTIVE</span>
+                        </div>
+                        <div style="color:#ccc;font-size:13px;margin-bottom:10px">
+                            <div>💬 VIP Pending: <span id="hestia-vip" style="color:#ff6b6b">0</span></div>
+                            <div>📦 Model: <span style="color:#00ff88">MiniMax-M2.7</span></div>
+                        </div>
+                        <button class="btn" onclick="agentAction('hestia','report')">📊 Report</button>
+                    </div>
+
+                    <!-- ORPHEUS -->
+                    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px;border-radius:12px;border:1px solid #ffd700">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:15px">
+                            <span style="font-size:28px">🔑</span>
+                            <div>
+                                <strong style="color:#ffd700;font-size:18px">ORPHEUS</strong>
+                                <div style="color:#888;font-size:12px">PKI & Zero-Trust</div>
+                            </div>
+                            <span style="margin-left:auto;background:#ffd700;color:#000;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold">✅ ACTIVE</span>
+                        </div>
+                        <div style="color:#ccc;font-size:13px;margin-bottom:10px">
+                            <div>🔐 Certs: <span id="orpheus-certs" style="color:#ffd700">0 active</span></div>
+                            <div>📦 Model: <span style="color:#00ff88">glm-5-turbo</span></div>
+                        </div>
+                        <button class="btn" onclick="agentAction('orpheus','report')">📊 Report</button>
+                    </div>
+
+                    <!-- ATHENE -->
+                    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px;border-radius:12px;border:1px solid #00bfff">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:15px">
+                            <span style="font-size:28px">🏛</span>
+                            <div>
+                                <strong style="color:#00bfff;font-size:18px">ATHENE</strong>
+                                <div style="color:#888;font-size:12px">Trading & Finance</div>
+                            </div>
+                            <span style="margin-left:auto;background:#00bfff;color:#000;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold">✅ ACTIVE</span>
+                        </div>
+                        <div style="color:#ccc;font-size:13px;margin-bottom:10px">
+                            <div>💰 Today: <span id="athene-pnl" style="color:#00ff88">+0.0%</span></div>
+                            <div>📦 Model: <span style="color:#00ff88">glm-5-turbo</span></div>
+                        </div>
+                        <button class="btn" onclick="agentAction('athene','report')">📊 Report</button>
+                    </div>
+
+                    <!-- METAMAUS -->
+                    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px;border-radius:12px;border:1px solid #ff9d00">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:15px">
+                            <span style="font-size:28px">🐭</span>
+                            <div>
+                                <strong style="color:#ff9d00;font-size:18px">METAMAUS</strong>
+                                <div style="color:#888;font-size:12px">Primary Agent</div>
+                            </div>
+                            <span style="margin-left:auto;background:#ff9d00;color:#000;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold">✅ ACTIVE</span>
+                        </div>
+                        <div style="color:#ccc;font-size:13px;margin-bottom:10px">
+                            <div>💡 Tasks: <span id="metamaus-tasks" style="color:#ff9d00">running</span></div>
+                            <div>📦 Model: <span style="color:#00ff88">qwen3.6-plus</span></div>
+                        </div>
+                        <button class="btn" onclick="agentAction('metamaus','report')">📊 Report</button>
+                    </div>
+
+                    <!-- ZERBERUS -->
+                    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px;border-radius:12px;border:1px solid #00ff88">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:15px">
+                            <span style="font-size:28px">🔐</span>
+                            <div>
+                                <strong style="color:#00ff88;font-size:18px">ZERBERUS</strong>
+                                <div style="color:#888;font-size:12px">Security & Infrastructure</div>
+                                <div style="color:#888;font-size:11px">📦 MiniMax-M2.7</div>
+                            </div>
+                            <span style="margin-left:auto;background:#00ff88;color:#000;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold">✅ ACTIVE</span>
+                        </div>
+                        <div style="color:#ccc;font-size:13px;margin-bottom:10px">
+                            <div>📊 Tasks: <span id="zerberus-tasks" style="color:#00ff88">0 pending</span></div>
+                            <div>🛡️ Security: <span style="color:#00ff88">All clear</span></div>
+                        </div>
+                        <button class="btn" onclick="agentAction('zerberus','report')">📊 Report</button>
+                    </div>
+
+                </div>
+
+                <div style="margin-top:25px;padding:15px;background:#1a1a2e;border-radius:8px">
+                    <h3 style="color:#fff;margin-top:0">🔧 Actions</h3>
+                    <button class="btn" onclick="agentAction('all','refresh')">🔄 Refresh All</button>
+                    <button class="btn" onclick="agentAction('all','logs')">📜 View Logs</button>
+                    <button class="btn" style="background:#ff4757" onclick="agentAction('all','stop')">🛑 Emergency Stop</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======= TRADING TAB WITH SUBTABS ======= -->
+        <div id="trading" class="tab-content active">
+            <div class="card">
+                <!-- Subtab Navigation -->
+                <div style="display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid #333">
+                    <div id="stb-frequenz" class="subtab active" onclick="switchTradingSubtab('frequenz')" style="padding:12px 24px;cursor:pointer;color:#00ff88;border-bottom:2px solid #00ff88;margin-bottom:-2px;font-weight:bold;transition:all 0.2s">📊 Frequenz</div>
+                    <div id="stb-portfolio" class="subtab" onclick="switchTradingSubtab('portfolio')" style="padding:12px 24px;cursor:pointer;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.2s">💼 Portfolio</div>
+                    <div id="stb-freqtrade" class="subtab" onclick="switchTradingSubtab('freqtrade')" style="padding:12px 24px;cursor:pointer;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.2s">⚡ Freqtrade</div>
+                </div>
+
+                <!-- === SUBTAB: FREQUENZ === -->
+                <div id="subtab-frequenz" class="trading-subtab-content">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+                        <!-- Market Overview -->
+                        <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px;border-radius:12px;border:1px solid #ff6b6b">
+                            <h3 style="color:#ff6b6b;margin-top:0">📊 Markets</h3>
+                            <div style="color:#ccc;margin-top:15px">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span>BTC:</span><span id="market-btc" style="color:#00ff88">$65,676</span></div>
+                                <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span>ADA (Cardano):</span><span id="market-ada" style="color:#0033a0">Loading...</span></div>
+                                <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span>SOL:</span><span id="market-sol" style="color:#ff4757">$81.70</span></div>
+                                <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span>Gold:</span><span>€2,456</span></div>
+                                <div style="display:flex;justify-content:space-between"><span>DAX:</span><span>22,450</span></div>
+                            </div>
+                        </div>
+                        <!-- Portfolio Mini -->
+                        <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px;border-radius:12px;border:1px solid #00bfff">
+                            <h3 style="color:#00bfff;margin-top:0">💰 Portfolio</h3>
+                            <div style="color:#ccc;margin-top:15px">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span>₿ Bitcoin:</span><span id="trading-btc" style="color:#00ff88">$65,676</span></div>
+                                <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span>◎ Solana:</span><span id="trading-sol" style="color:#00ff88">$81.70</span></div>
+                                <div style="display:flex;justify-content:space-between;padding-top:10px;border-top:1px solid #333"><span>Total:</span><span style="color:#ffd700;font-weight:bold">$66,346</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- === SUBTAB: PORTFOLIO === -->
+                <div id="subtab-portfolio" class="trading-subtab-content" style="display:none">
+                    <iframe src="/portfolio" style="width:100%;height:calc(100vh - 260px);border:none;background:#0a0a0f;border-radius:8px"></iframe>
+                </div>
+
+                <!-- === SUBTAB: FREQTRADE === -->
+                <div id="subtab-freqtrade" class="trading-subtab-content" style="display:none">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+                        <!-- FREQTRADE STATUS WIDGET -->
+                        <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px;border-radius:12px;border:1px solid #00ff88">
+                            <h3 style="color:#00ff88;margin-bottom:15px">⚡ Freqtrade Status</h3>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.9em;color:#ccc">
+                                <div>Status: <span id="ft-status" style="color:#ffaa00">🔄 Prüfe...</span></div>
+                                <div>Strategy: <span id="ft-strategy" style="color:#fff">--</span></div>
+                                <div>Balance: <span id="ft-balance" style="color:#00ff88">$--</span></div>
+                                <div>Pairs: <span id="ft-pairs" style="color:#fff">--</span></div>
+                                <div>P&amp;L: <span id="ft-pnl-pct" style="color:#00ff88">--%</span></div>
+                                <div>Trades: <span id="ft-trades" style="color:#fff">0</span></div>
+                                <div>Win Rate: <span id="ft-winrate" style="color:#00ff88">--%</span></div>
+                                <div>API: <span style="color:#888;font-size:0.8em">localhost:8080</span></div>
+                            </div>
+                            <a href="http://192.168.23.170:8080" target="_blank" style="display:inline-block;margin-top:15px;padding:8px 16px;background:#1a1a1a;border:1px solid #00ff88;color:#00ff88;text-decoration:none;border-radius:6px;font-size:0.85em">🚀 Open Freqtrade UI</a>
+                        </div>
+                        <!-- Winner / Loser -->
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+                            <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:15px;border-radius:12px;border:1px solid #00ff88">
+                                <h4 style="color:#00ff88;margin-bottom:8px">📈 Top Winner</h4>
+                                <table style="width:100%;font-size:0.85em"><thead><tr style="color:#666"><th style="text-align:left">Pair</th><th>Profit%</th><th>$</th></tr></thead><tbody id="ft-winners"><tr><td colspan="3" style="color:#666">Laden...</td></tr></tbody></table>
+                            </div>
+                            <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:15px;border-radius:12px;border:1px solid #ff4444">
+                                <h4 style="color:#ff4444;margin-bottom:8px">📉 Top Loser</h4>
+                                <table style="width:100%;font-size:0.85em"><thead><tr style="color:#666"><th style="text-align:left">Pair</th><th>Profit%</th><th>$</th></tr></thead><tbody id="ft-losers"><tr><td colspan="3" style="color:#666">Laden...</td></tr></tbody></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+                    <!-- FREQTRADE JS -->
+                    <script>
+// Load DB Stats
+async function loadDBStats() {
+    try {
+        const stats = await fetch("/api/db/stats").then(r => r.json());
+        document.getElementById("db-findings").textContent = stats.findings?.toLocaleString() || 0;
+        document.getElementById("db-actors").textContent = stats.actors?.toLocaleString() || 0;
+        document.getElementById("db-entities").textContent = stats.entities?.toLocaleString() || 0;
+        document.getElementById("db-24h").textContent = "+" + (stats.findings_24h || 0);
+        
+        // Update dashboard tiles
+        if (document.getElementById("db-size")) {
+            document.getElementById("db-size").textContent = (stats.db_size_mb || 59) + " MB";
+        }
+        if (document.getElementById("db-growth")) {
+            const growth24h = stats.findings_24h || 0;
+            const growth7d = stats.findings_7d || 0;
+            document.getElementById("db-growth").textContent = "+" + growth24h + " heute · +" + growth7d + " gesamt";
+        }
+        
+        // Update Rheingold findings counter in main card
+        if (document.getElementById("rheingold-findings")) {
+            const fi = stats.findings || 0;
+            document.getElementById("rheingold-findings").textContent = fi > 99999 ? Math.round(fi/1000) + 'K+' : fi.toLocaleString('de-DE');
+        }
+        
+        // Load recent logs
+        loadRecentLogs();
+    } catch(e) { console.error("DB Stats error:", e); }
+}
+
+async function loadRecentLogs() {
+    try {
+        const logs = await fetch("/api/logs?limit=5").then(r => r.json());
+        if (document.getElementById("log-count")) {
+            document.getElementById("log-count").textContent = logs.length + " Einträge";
+        }
+        
+        // Render log list
+        const logList = document.getElementById("log-list");
+        if (logList) {
+            const emojiMap = {
+                'metamaus': '🐭', 'zerberus': '🛡', 'rheingold': '🔍',
+                'hermes': '📡', 'hestia': '💬', 'orpheus': '🎵', 'athena': '📈'
+            };
+            logList.innerHTML = logs.map(l => {
+                const emoji = emojiMap[l.agent?.toLowerCase()] || '🤖';
+                const zeit = l.timestamp ? new Date(l.timestamp).toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'}) : '--:--';
+                const levelClass = l.level === 'warning' ? 'log-level-warning' : l.level === 'error' ? 'log-level-error' : 'log-level-info';
+                const levelLabel = l.level === 'warning' ? 'WARN' : l.level === 'error' ? 'ERR' : 'INFO';
+                return `<div class="log-row" onclick="showLog('${(l.message||'').replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:4px;cursor:pointer;font-size:12px" onmouseover="this.style.background='rgba(74,222,128,0.08)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size:14px">${emoji}</span>
+                    <span style="color:#4ade80;font-weight:700;min-width:70px">${l.agent || '-'}</span>
+                    <span style="color:#475569;font-size:11px;margin-left:auto">${zeit}</span>
+                    <span style="font-size:9px;letter-spacing:1px;padding:2px 5px;border-radius:3px;background:rgba(34,211,238,0.1);color:#22d3ee">${levelLabel}</span>
+                </div>`;
+            }).join('');
+        }
+    } catch(e) { console.error("Logs error:", e); }
+}
+
+function showLog(msg) {
+    document.getElementById('log-modal-text').textContent = msg;
+    document.getElementById('log-modal').style.display = 'flex';
+}
+loadDBStats();
+
+    <!-- Task Modal -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <h2>Task bearbeiten</h2>
+            <input type="hidden" id="task-id">
+            <label>Titel:</label>
+            <input type="text" id="task-title" placeholder="Task Titel">
+            <label>Beschreibung:</label>
+            <textarea id="task-desc" placeholder="Beschreibung..."></textarea>
+            <label>Status:</label>
+            <select id="task-status">
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="awaiting_confirm">Awaiting Confirm</option>
+                <option value="done">Done</option>
+            </select>
+            <label>Priorität (1-5):</label>
+            <select id="task-priority">
+                <option value="1">1 - Niedrig</option>
+                <option value="2">2</option>
+                <option value="3" selected>3 - Mittel</option>
+                <option value="4">4</option>
+                <option value="5">5 - Hoch</option>
+            </select>
+            <div style="margin-top: 20px;">
+                <button class="btn" onclick="saveTask()">Speichern</button>
+                <button class="btn btn-secondary" onclick="closeTaskModal()">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AGENT TASK MODAL — Task Control Center -->
+    <div id="agent-task-modal" class="modal">
+        <div class="modal-content" style="max-width:600px">
+            <h2 style="color:#00ff88">⚡ Task einwerfen</h2>
+            <input type="hidden" id="at-id">
+            <label>Agent:</label>
+            <select id="at-agent" style="width:100%;padding:10px;background:#2a2a2a;border:1px solid #444;border-radius:6px;color:#fff">
+                <option value="apollon">🔷 Apollon — Code &amp; Scripts</option>
+                <option value="athene">📈 Athene — Trading &amp; Backtest</option>
+                <option value="hermes">📡 Hermes — Demo-Scraper</option>
+                <option value="hestia">🏠 Hestia — YouTube &amp; Comments</option>
+                <option value="rheingold">🦅 Rheingold — IFG &amp; Transparenz</option>
+                <option value="zerberus">🛡 Zerberus — Netzwerk &amp; Security</option>
+                <option value="orpheus">🎵 Orpheus — Backup &amp; PKI</option>
+                <option value="metamaus">🐭 Metamaus — Teamleader</option>
+            </select>
+            <label>Task-Beschreibung:</label>
+            <textarea id="at-task" rows="4" placeholder="Was soll der Agent tun?" style="width:100%;padding:10px;background:#2a2a2a;border:1px solid #444;border-radius:6px;color:#fff;resize:vertical;font-family:inherit"></textarea>
+            <label>Priorität:</label>
+            <select id="at-priority" style="width:100%;padding:10px;background:#2a2a2a;border:1px solid #444;border-radius:6px;color:#fff">
+                <option value="10">🔴 P10 — Kritisch</option>
+                <option value="9">🟠 P9 — Dringend</option>
+                <option value="7" selected>🟡 P7 — Normal</option>
+                <option value="5">⚪ P5 — Niedrig</option>
+                <option value="3">🔵 P3 — Warten</option>
+            </select>
+            <div style="margin-top:20px;display:flex;gap:10px">
+                <button class="btn" onclick="saveAgentTask()" style="background:#00aa55;font-weight:bold">⚡ Einwerfen</button>
+                <button class="btn" onclick="closeAgentTaskModal()" style="background:#444">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NETWORK TAB -->
+        <!-- RHEINGOLD TAB -->
+        <div id="rheingold" class="tab-content">
+            <div id="rheingold-frame" style="width:100%;height:calc(100vh - 180px);overflow-y:auto;background:#0a0a0f"></div>
+        </div>
+
+        <!-- IFG TAB -->
+        <div id="ifg" class="tab-content">
+            <h2 style="margin-bottom:5px">📨 IFG-Anfragen & Beschwerden</h2>
+            <p style="color:#888;margin-bottom:15px">Informationsfreiheitsgesetz NRW — Anfragen, Beschwerden, Fristen</p>
+            <div id="ifg-list">Laden...</div>
+        </div>
+
+    <div id="network" class="tab-content">
+        <h2>🌐 Network Assets – Zerberus Scan</h2>
+        <div id="network-devices-container" class="device-grid">
+            <div style="grid-column: 1/-1; color: #666;">Laden...</div>
+        </div>
+    </div>
+
+    <!-- NETWORK MODAL -->
+    <div id="network-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="document.getElementById('network-modal').style.display='none'">Close</span>
+            <h2 id="network-modal-title"></h2>
+            <div id="network-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- MAILS TAB -->
+    <div id="mails" class="tab-content">
+        <!-- ===== HIMALAYA MAIL ABSCHNITT ===== -->
+        <h2>📧 Himalaya Postfach</h2>
+        
+        <!-- Himalaya Subtabs -->
+        <div style="display: flex; gap: 0; margin-bottom: 15px; border-bottom: 2px solid #00ff88;">
+            <div id="hsub-posteingang" class="himalaya-subtab active" onclick="switchHimalayaSubtab('posteingang')">📥 Posteingang</div>
+            <div id="hsub-gesendet" class="himalaya-subtab" onclick="switchHimalayaSubtab('gesendet')">📤 Gesendet</div>
+            <div id="hsub-entwurfe" class="himalaya-subtab" onclick="switchHimalayaSubtab('entwurfe')">📝 Entwürfe</div>
+        </div>
+
+        <!-- Subtab: Posteingang -->
+        <div id="himalaya-posteingang" class="himalaya-subtab-content">
+            <div id="himalaya-posteingang-list" style="min-height: 200px;"></div>
+        </div>
+
+        <!-- Subtab: Gesendet -->
+        <div id="himalaya-gesendet" class="himalaya-subtab-content" style="display: none;">
+            <div id="himalaya-gesendet-list" style="min-height: 200px;"></div>
+        </div>
+
+        <!-- Subtab: Entwürfe -->
+        <div id="himalaya-entwurfe" class="himalaya-subtab-content" style="display: none;">
+            <div id="himalaya-entwurfe-list" style="min-height: 200px;"></div>
+        </div>
+
+        <!-- Mail Detail Panel (click-to-expand) -->
+        <div id="himalaya-mail-detail" class="himalaya-mail-detail" style="display: none;">
+            <div class="himalaya-detail-header">
+                <span id="himalaya-detail-subject" style="font-size: 18px; font-weight: bold; color: #00ff88;"></span>
+                <span id="himalaya-detail-close" onclick="closeHimalayaDetail()" style="cursor: pointer; font-size: 24px; color: #ff4444;">✕</span>
+            </div>
+            <div id="himalaya-detail-meta" style="color: #888; margin: 8px 0;"></div>
+            <div id="himalaya-detail-body" style="background: #1a1a2e; border: 1px solid #333; border-radius: 6px; padding: 15px; white-space: pre-wrap; font-family: monospace; max-height: 600px; overflow-y: auto; color: #e0e0ff;"></div>
+        </div>
+
+        <!-- Separator -->
+        <div style="border-top: 1px solid #333; margin: 30px 0;"></div>
+
+        <!-- ===== RHEINGOLD MAIL ABSCHNITT (bestehend) ===== -->
+        <h2 style="margin-top: 10px;">🦅 Rheingold Mails</h2>
+        <div style="margin-bottom: 15px;">
+            <button onclick="loadMails('all')" class="filter-btn">Alle</button>
+            <button onclick="loadMails('entwurf')" class="filter-btn">Entwürfe</button>
+            <button onclick="loadMails('bereit')" class="filter-btn">Bereit</button>
+            <button onclick="loadMails('gesendet')" class="filter-btn">Gesendet</button>
+            <span id="mail-counter" class="badge" style="margin-left: 10px; background: red; color: white; padding: 2px 8px; border-radius: 10px;">0</span>
+        </div>
+        <table id="mails-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #1a1f2e;">
+                    <th style="padding: 10px; text-align: left;">An</th>
+                    <th style="padding: 10px; text-align: left;">Betreff</th>
+                    <th style="padding: 10px; text-align: left;">Status</th>
+                    <th style="padding: 10px; text-align: left;">Datum</th>
+                    <th style="padding: 10px; text-align: left;">Aktionen</th>
+                </tr>
+            </thead>
+            <tbody id="mails-tbody">
+                <tr><td colspan="5" style="padding: 20px; text-align: center;">Laden...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ============ LOGS TAB ============ -->
+
+    <div id="logs" class="tab-content">
+        <h2>📋 System Logs</h2>
+        
+        <!-- AGENT FILTER BUTTONS -->
+        <div style="margin-bottom:15px">
+         <span style="color:#00ff88;font-size:16px;font-weight:bold">Agent: </span>
+         <button onclick="filterLogs('agent','')" id="btn-all" class="log-btn active">Alle</button>
+         <button onclick="filterLogs('agent','zerberus')" id="btn-zerberus" class="log-btn zerberus">🛡 Zerberus</button>
+         <button onclick="filterLogs('agent','rheingold')" id="btn-rheingold" class="log-btn rheingold">🦅 Rheingold</button>
+         <button onclick="filterLogs('agent','hermes')" id="btn-hermes" class="log-btn hermes">📡 Hermes</button>
+         <button onclick="filterLogs('agent','hestia')" id="btn-hestia" class="log-btn hestia">💬 Hestia</button>
+         <button onclick="filterLogs('agent','orpheus')" id="btn-orpheus" class="log-btn orpheus">🎵 Orpheus</button>
+        <button onclick="filterLogs('agent','athena')" id="btn-athena" class="log-btn athena">📈 Athena</button>
+        <button onclick="filterLogs('agent','metamaus')" id="btn-metamaus" class="log-btn metamaus">🐭 Metamaus</button>
+        </div>
+
+        <!-- LEVEL FILTER BUTTONS -->
+        <div style="margin-bottom:20px">
+         <span style="color:#00ff88;font-size:16px;font-weight:bold">Level: </span>
+         <button onclick="filterLogs('level','')" class="log-btn active">Alle</button>
+         <button onclick="filterLogs('level','info')" class="log-btn">✅ Info</button>
+         <button onclick="filterLogs('level','warning')" class="log-btn" style="border-color:#ffaa00">⚠️ Warning</button>
+         <button onclick="filterLogs('level','error')" class="log-btn" style="border-color:#ff4444">🚨 Error</button>
+         <button onclick="filterLogs('level','critical')" class="log-btn" style="border-color:#ff0000">💀 Kritisch</button>
+        </div>
+
+        <table id="logs-table" class="log-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #1a1f2e;">
+                    <th style="padding: 10px; text-align: left;">Zeit</th>
+                    <th style="padding: 10px; text-align: left;">Agent</th>
+                    <th style="padding: 10px; text-align: left;">Level</th>
+                    <th style="padding: 10px; text-align: left;">Nachricht</th>
+                </tr>
+            </thead>
+            <tbody id="logs-tbody">
+                <tr><td colspan="4" style="padding: 20px; text-align: center;">Laden...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- MAIL MODAL -->
+    <div id="mail-modal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="modal-close" onclick="document.getElementById('mail-modal').style.display='none'">✕</span>
+            <h2 id="mail-modal-title">Mail bearbeiten</h2>
+            <input type="hidden" id="mail-id">
+            <div style="margin-bottom: 10px;">
+                <label style="display: block; margin-bottom: 5px;">An:</label>
+                <input type="email" id="mail-to" style="width: 100%; padding: 8px; background: #1a1f2e; color: #e0e0ff; border: 1px solid #00ff9d;">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label style="display: block; margin-bottom: 5px;">Betreff:</label>
+                <input type="text" id="mail-subject" style="width: 100%; padding: 8px; background: #1a1f2e; color: #e0e0ff; border: 1px solid #00ff9d;">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label style="display: block; margin-bottom: 5px;">Text:</label>
+                <textarea id="mail-body" rows="15" style="width: 100%; padding: 8px; background: #1a1f2e; color: #e0e0ff; border: 1px solid #00ff9d; font-family: monospace;"></textarea>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="saveMail()" style="padding: 10px 20px; background: #ffa500; color: black; border: none; border-radius: 5px; cursor: pointer;">💾 Speichern</button>
+                <button onclick="sendMail()" style="padding: 10px 20px; background: #00ff9d; color: black; border: none; border-radius: 5px; cursor: pointer;">✅ SENDEN</button>
+                <button onclick="deleteMail()" style="padding: 10px 20px; background: #ff4d4d; color: white; border: none; border-radius: 5px; cursor: pointer;">🗑 Löschen</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === ISOLATED CLOCK — survives even if other JS crashes ===
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleTimeString('de-DE');
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+        setTimeout(() => updateTime(), 50); // ensure clock initialises even if DOM loads late
+    </script>
+
+    <script>
+        function switchTab(tab, el) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            if (el) el.classList.add('active');
+            const tabEl = document.getElementById(tab);
+            if (!tabEl) { console.warn('Tab not found:', tab); return; }
+            tabEl.classList.add('active');
+            
+            console.log('Switched to tab:', tab, 'active:', tabEl.classList.contains('active'));
+            
+            // Load network devices when tab is opened
+            if (tab === 'network') {
+                console.log('Loading network devices...');
+                loadNetworkDevices();
+            }
+            
+            // Load mails when tab is opened
+            if (tab === 'mails') {
+                console.log('Loading mails...');
+                // Load Himalaya mail subtab by default
+                himalayaCurrentSubtab = 'posteingang';
+                switchHimalayaSubtab('posteingang');
+                // Also load Rheingold mails
+                loadMails('all');
+            }
+            
+            if (tab === 'youtube') { showYouTubeSubtab('stats'); }
+            if (tab === 'rheingold') { loadRheingoldTab(); }
+            if (tab === 'ifg') { loadIFGTab(); }
+            if (tab === 'tasks') { loadAgentTasks(); }
+            // Load logs when tab is opened
+            if (tab === 'logs') {
+                console.log('Loading logs...');
+                loadLogs();
+            }
+        }
+
+        // Trading subtab switching
+        function switchTradingSubtab(sub) {
+            document.querySelectorAll('.trading-subtab-content').forEach(el => el.style.display = 'none');
+            document.getElementById('subtab-' + sub).style.display = 'block';
+            document.querySelectorAll('#trading .subtab').forEach(el => {
+                el.style.color = '#888';
+                el.style.borderBottom = '2px solid transparent';
+                el.style.fontWeight = 'normal';
+            });
+            const active = document.getElementById('stb-' + sub);
+            active.style.color = '#00ff88';
+            active.style.borderBottom = '2px solid #00ff88';
+            active.style.fontWeight = 'bold';
+            if (sub === 'freqtrade') {
+                loadFreqtradeData();
+            }
+        }
+
+        // Load Freqtrade data from /api/freqtrade/* (proxied by Flask app.py with real auth)
+        let _ftInterval = null;
+        function loadFreqtradeData() {
+            Promise.all([
+                fetch('/api/freqtrade/status').then(r => r.json()),
+                fetch('/api/freqtrade/profit').then(r => r.json()),
+                fetch('/api/freqtrade/balance').then(r => r.json()),
+                fetch('/api/freqtrade/performance').then(r => r.json())
+            ]).then(([status, profit, balance, perf]) => {
+                const el = document.getElementById('ft-status');
+                if (!el) return;
+                // Determine status
+                if (Array.isArray(status) && status.length >= 0) {
+                    el.textContent = '✅ Running';
+                    el.style.color = '#00ff88';
+                } else {
+                    el.textContent = '❌ Offline';
+                    el.style.color = '#ff4444';
+                }
+                // Profit
+                const pnl = profit.profit_closed_percent_sum || 0;
+                const pnlEl = document.getElementById('ft-pnl-pct');
+                if (pnlEl) {
+                    pnlEl.textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + '%';
+                    pnlEl.style.color = pnl >= 0 ? '#00ff88' : '#ff4444';
+                }
+                // Trades
+                const tradesEl = document.getElementById('ft-trades');
+                if (tradesEl) tradesEl.textContent = profit.trade_count || 0;
+                // Win rate
+                const wrEl = document.getElementById('ft-winrate');
+                if (wrEl) {
+                    const wr = profit.winrate || 0;
+                    wrEl.textContent = wr > 0 ? (wr * 100).toFixed(1) + '%' : '--%';
+                }
+                // Balance
+                if (balance && balance.total !== undefined) {
+                    const balEl = document.getElementById('ft-balance');
+                    if (balEl) {
+                        const val = parseFloat(balance.total) || 0;
+                        balEl.textContent = val > 0 ? '$' + val.toFixed(2) : 'No data';
+                    }
+                }
+                // Pairs from open status
+                const pairsEl = document.getElementById('ft-pairs');
+                if (pairsEl) {
+                    if (Array.isArray(status) && status.length > 0) {
+                        const pairs = [...new Set(status.map(t => t.pair))];
+                        pairsEl.textContent = pairs.join(', ');
+                    } else {
+                        pairsEl.textContent = 'Keine offenen Trades';
+                    }
+                }
+                // Winners / Losers
+                if (Array.isArray(perf) && perf.length > 0) {
+                    const sorted = [...perf].sort((a, b) => b.profit_abs - a.profit_abs);
+                    const winners = sorted.filter(p => p.profit_abs > 0).slice(0, 5);
+                    const losers = sorted.filter(p => p.profit_abs < 0).slice(0, 5);
+                    const wEl = document.getElementById('ft-winners');
+                    const lEl = document.getElementById('ft-losers');
+                    if (wEl) wEl.innerHTML = winners.length ? winners.map(p =>
+                        `<tr><td>${p.pair}</td><td style="color:#00ff88">+${p.profit_pct?.toFixed(2) || 0}%</td><td style="color:#00ff88">$${p.profit_abs?.toFixed(2) || 0}</td></tr>`
+                    ).join('') : '<tr><td colspan="3" style="color:#666">Keine Daten</td></tr>';
+                    if (lEl) lEl.innerHTML = losers.length ? losers.map(p =>
+                        `<tr><td>${p.pair}</td><td style="color:#ff4444">${p.profit_pct?.toFixed(2) || 0}%</td><td style="color:#ff4444">$${p.profit_abs?.toFixed(2) || 0}</td></tr>`
+                    ).join('') : '<tr><td colspan="3" style="color:#666">Keine Daten</td></tr>';
+                }
+            }).catch(e => {
+                console.error('Freqtrade Fehler:', e);
+                const el = document.getElementById('ft-status');
+                if (el) { el.textContent = '❌ Offline'; el.style.color = '#ff4444'; }
+            });
+        }
+
+        // Modal Functions
+        function openTaskModal(id = null) {
+            document.getElementById('task-modal').classList.add('active');
+            if (id) {
+                fetch(`/api/tasks/${id}`).then(r => r.json()).then(data => {
+                    document.getElementById('task-id').value = id;
+                    document.getElementById('task-title').value = data.task.title;
+                    document.getElementById('task-desc').value = data.task.description;
+                    document.getElementById('task-status').value = data.task.status;
+                    document.getElementById('task-priority').value = data.task.priority;
+                });
+            } else {
+                document.getElementById('task-id').value = '';
+                document.getElementById('task-title').value = '';
+                document.getElementById('task-desc').value = '';
+                document.getElementById('task-status').value = 'todo';
+                document.getElementById('task-priority').value = '3';
+            }
+        }
+
+        function closeTaskModal() {
+            document.getElementById('task-modal').classList.remove('active');
+        }
+
+        function saveTask() {
+            const id = document.getElementById('task-id').value;
+            const task = {
+                title: document.getElementById('task-title').value,
+                description: document.getElementById('task-desc').value,
+                status: document.getElementById('task-status').value,
+                priority: parseInt(document.getElementById('task-priority').value),
+                assigned_to: 'Iggy'
+            };
+            const url = id ? `/api/tasks/${id}` : '/api/tasks';
+            const method = id ? 'PUT' : 'POST';
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(task)
+            }).then(() => {
+                closeTaskModal();
+                loadTasks();
+            });
+        }
+
+        function deleteTask(id) {
+            if (confirm('Task löschen?')) {
+                fetch(`/api/tasks/${id}`, { method: 'DELETE' }).then(() => loadTasks());
+            }
+        }
+
+        // Load Functions
+        
+        function loadPrices() {
+            fetch('/api/prices').then(r => r.json()).then(data => {
+                const setChange = (id, val) => {
+                    const el = document.getElementById(id);
+                    if (el && val !== undefined) {
+                        const num = parseFloat(val) || 0;
+                        el.textContent = (num >= 0 ? '↑' : '↓') + Math.abs(num).toFixed(1) + '%';
+                        el.className = 'ticker-change ' + (num >= 0 ? 'up' : 'down');
+                    }
+                };
+                
+                // Fixed ticker in header
+                if (data.btc) {
+                    document.getElementById('ticker-btc').textContent = data.btc;
+                    setChange('ticker-btc-chg', data.btc_24h);
+                    document.getElementById('trading-btc').textContent = data.btc;
+                    document.getElementById('market-btc').textContent = data.btc;
+                }
+                if (data.sol) {
+                    document.getElementById('ticker-sol').textContent = data.sol;
+                    setChange('ticker-sol-chg', data.sol_24h);
+                    document.getElementById('trading-sol').textContent = data.sol;
+                    document.getElementById('market-sol').textContent = data.sol;
+                }
+                if (data.gold) {
+                    document.getElementById('ticker-gold').textContent = data.gold;
+                    setChange('ticker-gold-chg', data.gold_24h);
+                }
+                if (data.silver) {
+                    document.getElementById('ticker-silver').textContent = data.silver;
+                    setChange('ticker-silver-chg', data.silver_24h);
+                }
+                
+                // Hero stats cards
+                if (data.btc) {
+                    const el = document.getElementById('btc-price');
+                    if(el) el.textContent = data.btc;
+                }
+                if (data.sol) {
+                    const el = document.getElementById('sol-price');
+                    if(el) el.textContent = data.sol;
+                }
+                if (data.gold) {
+                    const el = document.getElementById('gold-price');
+                    if(el) el.textContent = data.gold;
+                }
+                if (data.ada) {
+                    const el = document.getElementById('market-ada');
+                    if(el) el.textContent = data.ada;
+                }
+                if (data.silver) {
+                    const el = document.getElementById('silver-price');
+                    if(el) el.textContent = data.silver;
+                }
+                if (data.dax) {
+                    const el = document.getElementById('dax-price');
+                    if(el) el.textContent = data.dax;
+                }
+                if (data.sp500) {
+                    const el = document.getElementById('sp500-price');
+                    if(el) el.textContent = data.sp500;
+                }
+            }).catch(e => console.error('Price load failed:', e));
+        }
+        
+        // Load OpenClaw Stats
+        function loadOpenClawStats() {
+            fetch('/api/stats/openclaw').then(r => r.json()).then(data => {
+                const g = data.gateway || {};
+                document.getElementById('oc-messages').textContent = '1136';
+                document.getElementById('oc-tools').textContent = '913';
+                document.getElementById('oc-tokens').textContent = '84.5K';
+                document.getElementById('oc-cache').textContent = g.cache_hit_rate || '69.9%';
+            }).catch(e => console.error('OC Stats failed:', e));
+        }
+        
+        // Load Top Models
+        function loadTopModels() {
+            fetch('/api/stats/models').then(r => r.json()).then(data => {
+                const html = data.top_models.slice(0,5).map(m => 
+                    `<div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #333;">
+                        <span style="color:#888;">${m.name}</span>
+                        <span style="color:#00ff88;font-weight:bold;">${m.tokens}</span>
+                    </div>`
+                ).join('');
+                document.getElementById('top-models').innerHTML = html;
+            }).catch(e => console.error('Models failed:', e));
+        }
+        
+        // Load System Health
+        function loadSystemHealth() {
+            fetch('/api/stats/system').then(r => r.json()).then(data => {
+                document.getElementById('sys-uptime').textContent = data.uptime || '-';
+                document.getElementById('sys-cpu').textContent = (data.cpu || 0) + '%';
+                document.getElementById('sys-ram').textContent = data.ram ? data.ram.split('/')[0] : '-';
+                document.getElementById('sys-disk').textContent = (data.disk || 0) + '%';
+            }).catch(e => console.error('Health failed:', e));
+        }
+
+        let allDemos = [];
+        
+        let currentDemoFilter = 'all';
+        let currentLocationFilter = 'all';
+        
+        function filterDemos(category) {
+            currentDemoFilter = category;
+            // Update button styles
+            document.querySelectorAll('.card .btn').forEach(btn => {
+                if (btn.id.startsWith('btn-')) btn.style.background = '#333';
+            });
+            document.getElementById('btn-' + category.toLowerCase()).style.background = '#00ff88';
+            document.getElementById('btn-' + category.toLowerCase()).style.color = '#000';
+            
+            // Use API with category parameter (server-side filter)
+            fetch('/api/demos?category=' + category)
+                .then(r => r.json())
+                .then(data => renderDemos(data.events || []));
+        }
+        
+        function filterDemosByLocation(location) {
+            currentLocationFilter = location;
+            // Update button styles
+            document.querySelectorAll('.btn-location').forEach(btn => btn.style.background = '#333');
+            document.getElementById('loc-' + location.toLowerCase().replace('ü','ue').replace('ä','ae').replace('ö','oe')).style.background = '#00ff88';
+            document.getElementById('loc-' + location.toLowerCase().replace('ü','ue').replace('ä','ae').replace('ö','oe')).style.color = '#000';
+            
+            // Filter locally
+            fetch('/api/demos?category=' + currentDemoFilter)
+                .then(r => r.json())
+                .then(data => {
+                    let events = data.events || [];
+                    if (location !== 'all') {
+                        events = events.filter(e => (e.location || '').toLowerCase().includes(location.toLowerCase()));
+                    }
+                    renderDemos(events);
+                });
+        }
+        
+        function refreshDemos() {
+            fetch('/api/demos?category=' + currentDemoFilter)
+                .then(r => r.json())
+                .then(data => renderDemos(data.events || []));
+        }
+        
+        function renderDemos(events) {
+            // Group by time
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const tomorrow = new Date(today.getTime() + 86400000);
+            const weekEnd = new Date(today.getTime() + 7 * 86400000);
+            
+            const groups = { 'Heute': [], 'Morgen': [], 'Diese Woche': [], 'Später': [] };
+            
+            events.forEach(e => {
+                const d = new Date(e.event_date);
+                if (d < today) return;
+                if (d.toDateString() === today.toDateString()) groups['Heute'].push(e);
+                else if (d.toDateString() === tomorrow.toDateString()) groups['Morgen'].push(e);
+                else if (d < weekEnd) groups['Diese Woche'].push(e);
+                else groups['Später'].push(e);
+            });
+            
+            let html = '';
+            for (const [period, items] of Object.entries(groups)) {
+                if (items.length === 0) continue;
+                html += '<h3 style="margin-top:20px;color:#00ff88">' + period + ' (' + items.length + ')</h3>';
+                items.forEach(e => {
+                    const isValid = e.validation_status === 'valid';
+                    const isInvalid = e.validation_status === 'invalid';
+                    const statusColor = isValid ? '#00ff88' : isInvalid ? '#ff4444' : '#888';
+                    const statusText = isValid ? '✅' : isInvalid ? '❌' : '⏳';
+                    
+                    html += '<div class="demo-item" style="border-left:3px solid ' + statusColor + '">';
+                    html += '<div><strong>' + (e.title || 'Unbenannt') + '</strong></div>';
+                    html += '<div class="demo-meta">📅 ' + (e.event_date || '?') + ' | 📍 ' + (e.location || 'Köln') + '</div>';
+                    if (e.source_url) {
+                        html += '<a href="' + e.source_url + '" target="_blank" class="source-link">🔗 ' + (e.source_name || 'Quelle') + '</a>';
+                    }
+                    html += '<div class="validation-buttons">';
+                    html += '<button onclick="validateDemo(' + e.id + ', \'valid\')" class="btn-valid">✅</button>';
+                    html += '<button onclick="validateDemo(' + e.id + ', \'invalid\')" class="btn-invalid">❌</button>';
+                    html += '<span style="color:' + statusColor + ';font-size:0.8em;margin-left:5px">' + statusText + '</span>';
+                    html += '</div></div>';
+                });
+            }
+            document.getElementById('demos-list').innerHTML = html || '<div>Keine Demos gefunden</div>';
+        }
+        
+        function validateDemo(id, status) {
+            let reason = null;
+            if (status === "invalid") {
+                const r = prompt("Warum invalid?\n1=Kein/falsches Datum\n2=Falscher Ort\n3=News keine Demos\n4=Spam/Doppelt\n6=Quelle fehlerhaft\n7=Allgemeine News");
+                const reasons = ["", "Kein/falsches Datum", "Falscher Ort", "News keine Demos", "Spam/Doppelt", "", "Quelle fehlerhaft", "Allgemeine News"];
+                reason = reasons[parseInt(r)] || "Unbekannt";
+            }
+            fetch("/api/demos/validate", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({id: id, status: status, reason: reason})
+            }).then(() => refreshDemos());
+        }
+        
+        function loadDemos() {
+            fetch('/api/demos/all').then(r => r.json()).then(data => {
+                allDemos = data.events || [];
+                renderDemos(allDemos);
+            });
+        }
+
+        let allNews = [];
+        
+        function filterNews(category) {
+            document.querySelectorAll('#news .card .btn').forEach(btn => {
+                if (btn.id.startsWith('btn-news-')) btn.style.background = '#333';
+            });
+            const btnId = 'btn-news-' + category.replace('-', '');
+            const btn = document.getElementById(btnId) || document.getElementById('btn-news-' + category);
+            if (btn) { btn.style.background = '#00ff88'; btn.style.color = '#000'; }
+            
+            const filtered = category === 'all' ? allNews : allNews.filter(n => n.category === category || n.source_category === category);
+            renderNews(filtered);
+        }
+
+        function filterNewsSearch(query) {
+            query = query.toLowerCase().trim();
+            if (!query) { renderNews(allNews); return; }
+            const filtered = allNews.filter(n =>
+                (n.title && n.title.toLowerCase().includes(query)) ||
+                (n.summary && n.summary.toLowerCase().includes(query)) ||
+                (n.source_name && n.source_name.toLowerCase().includes(query)) ||
+                (n.category && n.category.toLowerCase().includes(query))
+            );
+            renderNews(filtered);
+        }
+        
+        function renderNews(articles) {
+            if (!articles || articles.length === 0) {
+                document.getElementById('news-list').innerHTML = '<div>Keine News gefunden</div>';
+                return;
+            }
+            document.getElementById('news-list').innerHTML = articles.map(a => {
+                // Relevance badge
+                const score = a.relevance_score || 0;
+                let badge = '';
+                if (score >= 100) badge = '<span style="color:#00ff88;font-size:10px">🔥</span>';
+                else if (score >= 90) badge = '<span style="color:#ffa500;font-size:10px">📋</span>';
+                
+                // Date display
+                const dateStr = a.published_at ? new Date(a.published_at).toLocaleDateString('de-DE') : (a.fetched_at ? new Date(a.fetched_at).toLocaleDateString('de-DE') : '');
+                
+                return `
+                <div class="news-item" onclick="window.open('${a.url}', '_blank')">
+                    <div style="display:flex;justify-content:space-between;align-items:start">
+                        <div style="flex:1">
+                            ${badge}
+                            <strong>${a.title || 'Ohne Titel'}</strong>
+                        </div>
+                        <span style="color:#888;font-size:0.85em;white-space:nowrap;margin-left:10px">${a.source_name || ''}</span>
+                    </div>
+                    <div style="color:#888;font-size:0.85em;margin-top:4px">
+                        ${a.source_category || a.category || ''} ${dateStr ? '| ' + dateStr : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        
+        function showYouTubeSubtab(tab) {
+            document.querySelectorAll(".yt-subtab").forEach(el => el.style.display = "none");
+            document.getElementById("yt-" + tab).style.display = "block";
+            if (tab === "stats") loadYouTubeStats();
+            else if (tab === "community") loadYouTubeCommunity();
+            else if (tab === "vip") loadYouTubeVIP();
+            else if (tab === "allcomments") loadYouTubeAllComments();
+            else if (tab === "comments") { loadYouTubeComments(); loadYouTubeProgress(); }
+        }
+
+        function loadYouTubeStats() {
+            fetch("/api/youtube/stats/all").then(r => r.json()).then(data => {
+                if (data.status === "success" && data.channels) {
+                    // Find iggyswelt (own channel)
+                    const own = data.channels.find(ch => ch.type === 'own');
+                    const competitors = data.channels.filter(ch => ch.type === 'competitor');
+                    const totalSubs = data.channels.reduce((sum, ch) => sum + (ch.subscribers || 0), 0);
+                    const totalViews = data.channels.reduce((sum, ch) => sum + (ch.total_views || 0), 0);
+                    const totalVideos = data.channels.reduce((sum, ch) => sum + (ch.video_count || 0), 0);
+                    
+                    let html = '';
+                    
+                    // HERO SECTION - IGGYSWELT PROMINENT
+                    html += '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:15px;margin-bottom:20px">';
+                    html += '<h1 style="margin:0 0 20px 0;font-size:2em">📺 ' + (own ? own.channel_name : 'YouTube') + '</h1>';
+                    html += '<div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:20px">';
+                    html += '<div style="text-align:center"><div style="font-size:2.5em;font-weight:bold">' + (own ? (own.subscribers||0).toLocaleString() : '0') + '</div><div style="color:#888">Abonnenten</div></div>';
+                    html += '<div style="text-align:center"><div style="font-size:2.5em;font-weight:bold">' + (own ? (own.total_views||0).toLocaleString() : '0') + '</div><div style="color:#888">Views</div></div>';
+                    html += '<div style="text-align:center"><div style="font-size:2.5em;font-weight:bold">' + (own ? (own.video_count||0).toLocaleString() : '0') + '</div><div style="color:#888">Videos</div></div>';
+                    html += '</div></div>';
+                    
+                    // QUICK ACTIONS
+                    html += '<div style="display:flex;gap:15px;margin-bottom:20px">';
+                    html += '<button class="btn" style="flex:1;padding:20px;font-size:1.2em;background:#00ff88;color:#000" onclick="showYouTubeSubtab(\'vip\')">⭐ VIP Kommentare</button>';
+                    html += '<button class="btn" style="flex:1;padding:20px;font-size:1.2em" onclick="showYouTubeSubtab(\'allcomments\')">💬 Alle Kommentare</button>';
+                    html += '</div>';
+                    
+                    // COMPETITOR TABLE
+                    html += '<h3>📊 Mitbewerber</h3>';
+                    html += '<table style="width:100%;border-collapse:collapse;font-size:0.9em">';
+                    html += '<tr style="background:#333"><th style="padding:10px">Kanal</th><th>Type</th><th>Subs</th><th>Views</th><th>Videos</th></tr>';
+                    data.channels.forEach(ch => {
+                        html += '<tr style="border-bottom:1px solid #444">';
+                        html += '<td style="padding:10px"><strong>' + ch.channel_name + '</strong></td>';
+                        html += '<td>' + ch.type + '</td>';
+                        html += '<td>' + (ch.subscribers || 0).toLocaleString() + '</td>';
+                        html += '<td>' + (ch.total_views || 0).toLocaleString() + '</td>';
+                        html += '<td>' + (ch.video_count || 0) + '</td>';
+                        html += '</tr>';
+                    });
+                    html += '</table>';
+                    
+                    document.getElementById("yt-stats-content").innerHTML = html;
+                }
+            });
+        }
+
+        function loadYouTubeCommunity() {
+            // Get stats first
+            fetch("/api/youtube/community/top100/comments").then(r => r.json()).then(data => {
+                let members = (data.members || []);
+                let totalComments = members.reduce((sum, u) => sum + (u.total_comments || 0), 0);
+                let totalLikes = members.reduce((sum, u) => sum + (u.total_likes_received || 0), 0);
+                document.getElementById("yt-community-stats").innerHTML = 
+                    '📊 Top 100 User: ' + members.length + ' | ' + totalComments + ' Kommentare | ' + totalLikes + ' Likes';
+                
+                let top20 = members.slice(0, 20);
+                
+                // Top by comments
+                let html = '<div style="display:flex;gap:20px;flex-wrap:wrap">';
+                html += '<div style="flex:1;min-width:300px"><h3>🏆 Top 20 Kommentare</h3>';
+                html += '<table style="width:100%;border-collapse:collapse;font-size:0.9em">';
+                html += '<tr style="background:#333"><th style="padding:8px">#</th><th>User</th><th>Kommentare</th></tr>';
+                members.forEach((u, i) => {
+                    let initial = (u.author_name || '?')[1] || '?';
+                    html += '<tr style="border-bottom:1px solid #444">';
+                    html += '<td style="padding:8px;color:#888">' + (i+1) + '</td>';
+                    html += '<td style="padding:8px"><span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:#00ff88;color:#000;text-align:center;line-height:24px;font-size:12px;margin-right:8px">' + initial.toUpperCase() + '</span>' + (u.author_name || 'Unbekannt') + '</td>';
+                    html += '<td style="padding:8px"><span style="background:#00ff88;color:#000;padding:2px 8px;border-radius:10px;font-size:0.8em">' + u.total_comments + '</span></td></tr>';
+                });
+                html += '</table></div>';
+                
+                // Top by likes (from members API)
+                let byLikes = [...members].sort((a,b) => (b.total_likes_received||0) - (a.total_likes_received||0)).slice(0,20);
+                html += '<div style="flex:1;min-width:300px"><h3>❤️ Top 20 Likes</h3>';
+                html += '<table style="width:100%;border-collapse:collapse;font-size:0.9em">';
+                html += '<tr style="background:#333"><th style="padding:8px">#</th><th>User</th><th>Likes</th></tr>';
+                byLikes.forEach((u, i) => {
+                    let initial = (u.author_name || '?')[1] || '?';
+                    html += '<tr style="border-bottom:1px solid #444">';
+                    html += '<td style="padding:8px;color:#888">' + (i+1) + '</td>';
+                    html += '<td style="padding:8px"><span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:#ff6b6b;color:#fff;text-align:center;line-height:24px;font-size:12px;margin-right:8px">' + initial.toUpperCase() + '</span>' + (u.author_name || 'Unbekannt') + '</td>';
+                    html += '<td style="padding:8px"><span style="background:#ff6b6b;color:#fff;padding:2px 8px;border-radius:10px;font-size:0.8em">' + (u.total_likes_received || 0) + '</span></td></tr>';
+                });
+                html += '</table></div></div>';
+                
+                document.getElementById("yt-community-content").innerHTML = html;
+            }).catch(e => document.getElementById("yt-community-content").innerHTML = "Fehler: " + e);
+        }
+        
+        function loadYouTubeVIP() {
+            fetch("/api/youtube/comments/vip").then(r => r.json()).then(data => {
+                let html = '';
+                (data.comments || []).forEach(c => {
+                    const replyCount = c.reply_count || 0;
+                    html += '<div style="background:rgba(255,255,255,0.05);padding:15px;margin:10px 0;border-left:3px solid #ffd700">';
+                    html += '<div><strong>' + c.author_name + '</strong> <span style="color:#ffd700">⭐ VIP</span> <span style="cursor:pointer" onclick="toggleLike(' + c.id + ')">' + (c.is_liked ? '👍' : '🤍') + '</span></div>';
+                    html += '<div style="margin:10px 0">' + c.text + '</div>';
+                    html += '<div style="color:#888;font-size:0.9em">' + (c.video_title || '') + ' | ' + (c.published_at ? new Date(c.published_at).toLocaleDateString() : '') + '</div>';
+                    html += '<div id="reply-' + c.id + '"></div>';
+                    html += '<button class=btn onclick="showReplyForm(' + c.id + ')">Antworten</button>';
+                    if (replyCount > 0) {
+                        html += ' <button class=btn style="background:#444" onclick="showThread(' + c.id + ')">💬 ' + replyCount + ' Antworten</button>';
+                        html += '<div id="thread-' + c.id + '" style="display:none;margin-left:20px;margin-top:10px;padding:10px;background:rgba(0,0,0,0.3)"></div>';
+                    }
+                    html += '</div>';
+                });
+                html = html || '<p>Keine VIP-Kommentare</p>';
+                document.getElementById("yt-vip-content").innerHTML = html;
+            });
+        }
+        
+        function showThread(commentId) {
+            const threadDiv = document.getElementById("thread-" + commentId);
+            if (threadDiv.style.display === 'none') {
+                threadDiv.style.display = 'block';
+                threadDiv.innerHTML = '<p>Lade Thread...</p>';
+                fetch("/api/youtube/comments/thread/" + commentId).then(r => r.json()).then(data => {
+                    let html = '';
+                    (data.replies || []).forEach(r => {
+                        const isIggy = r.author_name === '@iggyswelt';
+                        html += '<div style="padding:8px;margin:5px 0;background:' + (isIggy ? 'rgba(0,255,136,0.2)' : 'rgba(255,255,255,0.05)') + ';border-left:3px solid ' + (isIggy ? '#00ff88' : '#888') + '">';
+                        html += '<strong>' + r.author_name + '</strong>: ' + r.text + '</div>';
+                    });
+                    html = html || '<p>Keine Antworten</p>';
+                    threadDiv.innerHTML = html;
+                });
+            } else {
+                threadDiv.style.display = 'none';
+            }
+        }
+        
+        function loadYouTubeAllComments() {
+            fetch("/api/youtube/comments?limit=50").then(r => r.json()).then(data => {
+                let html = '';
+                (data.comments || []).forEach(c => {
+                    html += '<div style="background:rgba(255,255,255,0.05);padding:15px;margin:10px 0">';
+                    html += '<div><strong>' + c.author_name + '</strong> <span style="cursor:pointer" onclick="toggleLike(' + c.id + ')">' + (c.is_liked ? '👍' : '🤍') + '</span></div>';
+                    html += '<div style="margin:10px 0">' + c.text + '</div>';
+                    html += '<div style="color:#888;font-size:0.9em">' + (c.video_title || '') + ' | ' + (c.published_at ? new Date(c.published_at).toLocaleDateString() : '') + '</div>';
+                    html += '<div id="reply-' + c.id + '"></div>';
+                    html += '<button class=btn onclick="showReplyForm(' + c.id + ')">Antworten</button>';
+                    html += '</div>';
+                });
+                html = html || '<p>Keine Kommentare</p>';
+                document.getElementById("yt-allcomments-content").innerHTML = html;
+            });
+        }
+
+        function loadYouTubeComments() {
+        function loadYouTubeProgress() {
+            fetch("/api/youtube/progress").then(r => r.json()).then(data => {
+                const percent = Math.round(data.percent || 0);
+                document.getElementById("yt-progress").innerHTML = "📺 " + (data.learned || 0) + " von " + data.total + " Videos transkribiert (" + percent + "%)";
+            }).catch(() => {});
+        }
+
+            fetch("/api/youtube/comments").then(r => r.json()).then(data => {
+                let html = "";
+                (data.comments || []).forEach(c => { 
+            const liked = c.is_liked ? '👍' : '🤍';
+            html += "<div style='background:rgba(255,255,255,0.05);padding:15px;margin:10px 0'>";
+            html += "<div><strong>" + c.author_name + "</strong> <span style='cursor:pointer' onclick='toggleLike(" + c.id + ")'>" + liked + "</span></div>";
+            html += "<div style='margin:10px 0'>" + c.text + "</div>";
+
+            html += "<button class=btn onclick='replyToComment(" + c.id + ")'>Antworten</button>";
+            html += "<button class=btn onclick='generateReply(" + c.id + ")'>✍️ Vorschlag</button>";
+            html += "<div id='sugg-" + c.id + "'></div>";
+            html += "</div>"; 
+        });
+                html = html || "<p>Keine Kommentare</p>";
+                document.getElementById("yt-comments-content").innerHTML = html;
+            });
+        }
+
+        function generateReplies() { document.getElementById("yt-comments-content").innerHTML = "<p>Generiere Vorschläge...</p>"; }
+        
+        function generateReply(commentId) {
+            document.getElementById("sugg-" + commentId).innerHTML = "<p>Generiere...</p>";
+            fetch("/api/youtube/comments/" + commentId + "/suggest", {method: "POST"}).then(r => r.json()).then(data => {
+                let html = "<div style='margin:10px 0'>";
+                if (data.suggestion1) {
+                    html += "<button class=btn style='margin:2px' onclick='useReply(" + commentId + "," + JSON.stringify(data.suggestion1) + ")'>" + data.suggestion1 + "</button>";
+                }
+                if (data.suggestion2) {
+                    html += "<button class=btn style='margin:2px' onclick='useReply(" + commentId + "," + JSON.stringify(data.suggestion2) + ")'>" + data.suggestion2 + "</button>";
+                }
+                html += " <button class=btn style='background:#666' onclick='loadYouTubeComments()'>X</button></div>";
+                document.getElementById("sugg-" + commentId).innerHTML = html;
+            });
+        }
+        
+        function useReply(commentId, replyText) {
+            fetch("/api/youtube/comments/" + commentId + "/reply", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({text: replyText})
+            }).then(() => loadYouTubeComments());
+        }
+        
+        function showReplyForm(commentId) {
+            // Get comment data
+            fetch("/api/youtube/comments").then(r => r.json()).then(data => {
+                const c = data.comments.find(x => x.id === commentId);
+                if (!c) return;
+                
+                // Generate suggestions - fill input field instead of sending
+                fetch("/api/youtube/comments/" + commentId + "/suggest", {method: "POST"}).then(r => r.json()).then(sugg => {
+                    let html = '<div style="background:rgba(0,255,136,0.1);padding:15px;margin:10px 0;border-radius:8px">';
+                    html += '<div style="margin-bottom:10px"><strong>Antwort an ' + c.author_name + ':</strong></div>';
+                    if (sugg.suggestion1) {
+                        html += '<button class=btn style="margin:2px" onclick="fillReplyInput(' + commentId + ',\'' + sugg.suggestion1.replace(/'/g,"\\'") + '\')">' + sugg.suggestion1 + '</button>';
+                    }
+                    if (sugg.suggestion2) {
+                        html += '<button class=btn style="margin:2px" onclick="fillReplyInput(' + commentId + ',\'' + sugg.suggestion2.replace(/'/g,"\\'") + '\')">' + sugg.suggestion2 + '</button>';
+                    }
+                    html += '<br><input type="text" id="reply-input-' + commentId + '" placeholder="Eigene Antwort..." style="width:80%;margin-top:10px;padding:8px">';
+                    html += '<button class=btn style="margin:5px" onclick="sendReply(' + commentId + ',document.getElementById(\'reply-input-' + commentId + '\').value)">Senden</button>';
+                    html += '<button class=btn style="background:#666" onclick="document.getElementById(\'reply-' + commentId + '\').innerHTML=\'\'">X</button>';
+                    html += '</div>';
+                    document.getElementById("reply-" + commentId).innerHTML = html;
+                });
+            });
+        }
+        
+        function fillReplyInput(commentId, text) {
+            const input = document.getElementById("reply-input-" + commentId);
+            if (input) input.value = text;
+        }
+        
+        function sendReply(commentId, text) {
+            if (!text || text.trim() === "") return;
+            fetch("/api/youtube/comments/" + commentId + "/reply", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({text: text})
+            }).then(() => {
+                document.getElementById("reply-" + commentId).innerHTML = "";
+                loadYouTubeVIP();
+            });
+        }
+        
+        function toggleLike(commentId) {
+            fetch("/api/youtube/comments/" + commentId + "/like", {method: "POST"}).then(r => r.json()).then(data => {
+                if (data.status === 'success') {
+                    // Update the button visually
+                    const btn = document.querySelector('[onclick="toggleLike(' + commentId + ')"]');
+                    if (btn) {
+                        btn.textContent = '👍';
+                        btn.style.color = '#00ff88';
+                    }
+                    loadYouTubeVIP();
+                } else {
+                    alert('Fehler: ' + (data.message || 'Unknown'));
+                }
+            }).catch(e => console.error('Like error:', e));
+        }
+        
+        function skipComment(id) { loadYouTubeComments(); }
+
+        function loadYouTube() {
+            fetch('/api/youtube/stats/all').then(r => r.json()).then(data => {
+                if (data.status === 'success' && data.channels) {
+                    let html = '<table style="width:100%;border-collapse:collapse"><tr style="background:#333"><th style="padding:8px">Kanal</th><th>Type</th><th>Subs</th><th>Views</th><th>Videos</th><th>Updates</th></tr>';
+                    data.channels.forEach(ch => {
+                        html += `<tr style="border-bottom:1px solid #444">
+                            <td style="padding:8px"><strong>${ch.channel_name}</strong></td>
+                            <td>${ch.type}</td>
+                            <td>${(ch.subscribers||0).toLocaleString()}</td>
+                            <td>${(ch.total_views||0).toLocaleString()}</td>
+                            <td>${ch.video_count||0}</td>
+                            <td>${ch.updated_at ? new Date(ch.updated_at).toLocaleDateString('de-DE') : '-'}</td>
+                        </tr>`;
+                    });
+                    html += '</table>';
+                    document.getElementById('youtube-content').innerHTML = html;
+                } else {
+                    document.getElementById('youtube-content').innerHTML = 'Fehler: ' + (data.message || 'Unknown');
+                }
+            }).catch(e => document.getElementById('youtube-content').innerHTML = 'Error: ' + e);
+        }
+        
+        function loadNews(mode) {
+            let url = '/api/news?limit=30';
+            if (mode === 'relevance') {
+                url = '/api/news?limit=30&sortBy=relevance';
+                document.querySelectorAll('#news .card .btn').forEach(btn => {
+                    if (btn.id.startsWith('btn-news-')) btn.style.background = '#333';
+                });
+                const btn = document.getElementById('btn-news-relevance');
+                if (btn) { btn.style.background = '#00ff88'; btn.style.color = '#000'; }
+            } else if (mode === 'vogue') {
+                url = '/api/news?limit=30&vogue=true';
+                document.querySelectorAll('#news .card .btn').forEach(btn => {
+                    if (btn.id.startsWith('btn-news-')) btn.style.background = '#333';
+                });
+                const btn = document.getElementById('btn-news-vogue');
+                if (btn) { btn.style.background = '#ff4444'; btn.style.color = '#fff'; }
+            }
+            fetch(url).then(r => r.json()).then(data => {
+                allNews = data.articles || [];
+                renderNews(allNews);
+            });
+        }
+
+        function loadTasks(extraParams = '') {
+            const category = document.getElementById('task-category-filter')?.value || 'all';
+            const params = extraParams || (category !== 'all' ? `?category=${category}` : '');
+            fetch('/api/tasks' + params).then(r => r.json()).then(data => {
+                const total = data.counts.todo + data.counts.in_progress + data.counts.awaiting_confirm + data.counts.done;
+                document.getElementById('task-count').textContent = total;
+                ['todo', 'in-progress', 'awaiting-confirm', 'done'].forEach(status => {
+                    const container = document.getElementById('tasks-' + status);
+                    const tasks = data.tasks[status.replace('-', '_')] || [];
+                    container.innerHTML = tasks.map(t => `
+                        <div class="task-card" draggable="true" ondragstart="drag(event)" draggable="true" ondragstart="drag(event)" ondragstart="drag(event)" draggable="true" ondragstart="drag(event)" data-id=" style="${t.archived ? 'opacity:0.6' : ''}">
+                            <span class="task-priority priority-${t.priority}">P${t.priority}</span>
+                            ${t.category ? `<span style="font-size:0.7em;background:#333;padding:2px 6px;border-radius:4px;margin-left:5px">${t.category}</span>` : ''}
+                            <div><strong><a href="${t.url || '#'}" style="color: inherit; text-decoration: none;">${t.title}</a></strong></div>
+                            <div style="color: #888; font-size: 0.85em; margin-top: 5px;">${t.description || ''}</div>
+                            <div class="task-actions">
+                                ${!t.archived ? `<button class="btn" style="padding: 4px 8px; font-size: 0.7em;" onclick="archiveTask(${t.id})">📦</button>` : ''}
+                                <button class="btn" style="padding: 4px 8px; font-size: 0.7em;" onclick="openTaskModal(${t.id})">✏️</button>
+                                <button class="btn btn-danger" style="padding: 4px 8px; font-size: 0.7em;" onclick="deleteTask(${t.id})">🗑️</button>
+                            </div>
+                        </div>
+                    `).join('');
+                });
+            });
+        }
+        
+        function drag(ev){ev.dataTransfer.setData("text",ev.target.closest(".task-card").dataset.id)}
+function allowDrop(ev){ev.preventDefault()}
+function drop(ev){ev.preventDefault();var t=ev.dataTransfer.getData("text"),s=ev.target.closest("[id^=tasks-]").id.replace("tasks-","");if(t&&s)fetch("/api/tasks/"+t,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:s})}).then(()=>loadTasks())}
+
+function archiveTask(id) {
+            fetch(`/api/tasks/${id}/archive`, { method: 'POST' }).then(() => loadTasks());
+        }
+
+        // Initial Load — wrapped in DOMContentLoaded for safety
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDemos();
+            loadOpenClawStats();
+        loadTopModels();
+        loadSystemHealth();
+        loadNews();
+        showYouTubeSubtab('stats');
+        loadAgentTasks();  // Load workflow on startup
+        loadAgents();  // Load agent status
+
+        // Initial price load with error handling
+            try { loadPrices(); } catch(e) { console.error('loadPrices init error:', e); }
+        });
+
+        // Load prices every 60 seconds
+        setInterval(function() {
+            try { loadPrices(); } catch(e) { console.error('loadPrices interval error:', e); }
+        }, 60000);
+
+        // ========== TASK CONTROL CENTER / WORKFLOW ==========
+        let workflowTimer = null;
+
+        const AGENT_EMOJI = {
+            apollon: '🔷', athene: '📈', hermes: '📡', hestia: '🏠',
+            rheingold: '🦅', zerberus: '🛡', orpheus: '🎵', metamaus: '🐭'
+        };
+        const AGENT_COLOR = {
+            apollon: '#6c8ebf', athene: '#79b8ff', hermes: '#79c0ff',
+            hestia: '#d2a8ff', rheingold: '#ff9d00', zerberus: '#3fb950',
+            orpheus: '#ff7b72', metamaus: '#e3b341'
+        };
+
+        function statusBadge(status) {
+            const map = {
+                pending: ['⏸ Pending', '#FFD600'],
+                in_progress: ['▶ In Progress', '#2196F3'],
+                done: ['✅ Done', '#3fb950'],
+                stopped: ['🛑 Gestoppt', '#ff4757'],
+                failed: ['💀 Failed', '#ff4757']
+            };
+            const [label, color] = map[status] || [status, '#888'];
+            return `<span style="background:${color}22;color:${color};padding:3px 10px;border-radius:12px;font-size:0.85em;font-weight:bold">${label}</span>`;
+        }
+
+        function progressBar(pct) {
+            const color = pct === 100 ? '#3fb950' : pct > 0 ? '#2196F3' : '#555';
+            return `<div style="display:flex;align-items:center;gap:8px;min-width:120px">
+                <div style="flex:1;background:#222;border-radius:6px;height:8px;overflow:hidden">
+                    <div style="width:${pct}%;background:${color};height:100%;border-radius:6px;transition:width 0.3s"></div>
+                </div>
+                <span style="color:#888;font-size:0.8em;min-width:30px">${pct}%</span>
+            </div>`;
+        }
+
+        function loadAgentTasks() {
+            const agent = document.getElementById('workflow-agent-filter')?.value || 'all';
+            const status = document.getElementById('workflow-status-filter')?.value || 'all';
+            let url = '/api/db/tasks?';
+            if (agent !== 'all') url += `agent=${encodeURIComponent(agent)}&`;
+            if (status !== 'all') url += `status=${encodeURIComponent(status)}`;
+
+            fetch(url).then(r => r.json()).then(data => {
+                if (data.status !== 'success') {
+                    document.getElementById('workflow-tbody').innerHTML =
+                        `<tr><td colspan="8" style="color:#ff4757;padding:20px">Fehler: ${data.message || 'Unbekannt'}</td></tr>`;
+                    return;
+                }
+                const tasks = data.tasks || [];
+                const c = data.counts || {};
+
+                // Counters
+                document.getElementById('workflow-counters').innerHTML =
+                    `<span class="counter-badge" style="background:#3a3a00;color:#FFD600;padding:4px 12px;border-radius:12px">⏸ ${c.pending||0} pending</span>
+                     <span class="counter-badge" style="background:#1a2a3a;color:#2196F3;padding:4px 12px;border-radius:12px">▶ ${(c.in_progress||0)} running</span>
+                     <span class="counter-badge" style="background:#003a00;color:#3fb950;padding:4px 12px;border-radius:12px">✅ ${c.done||0} done</span>
+                     <span class="counter-badge" style="background:#3a0000;color:#ff4757;padding:4px 12px;border-radius:12px">🛑 ${c.stopped||0} gestoppt</span>
+                     <span class="counter-badge" style="background:#1a1a2a;color:#888;padding:4px 12px;border-radius:12px">Σ ${c.total||0} total</span>`;
+
+                if (!tasks.length) {
+                    document.getElementById('workflow-tbody').innerHTML =
+                        `<tr><td colspan="8" style="color:#555;padding:30px;text-align:center">Keine Tasks gefunden — alles ruhig 🛡</td></tr>`;
+                    return;
+                }
+
+                const rows = tasks.map(t => {
+                    const emoji = AGENT_EMOJI[t.agent] || '🤖';
+                    const agentColor = AGENT_COLOR[t.agent] || '#888';
+                    const created = t.created_at ? new Date(t.created_at).toLocaleString('de-DE', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+                    const canStop = t.status === 'pending' || t.status === 'in_progress';
+                    const canSetDone = t.status === 'in_progress';
+                    const taskShort = t.task.length > 120 ? t.task.substring(0,120) + '…' : t.task;
+                    const priorityColor = t.priority >= 9 ? '#ff4757' : t.priority >= 7 ? '#ff9d00' : '#888';
+
+                    return `<tr style="border-bottom:1px solid #22222a;transition:background 0.15s" onmouseover="this.style.background='#1a1f2e'" onmouseout="this.style.background=''">
+                        <td style="padding:10px;color:#555;font-family:monospace;font-size:0.8em">#${t.id}</td>
+                        <td style="padding:10px">
+                            <span style="background:${agentColor}22;color:${agentColor};padding:2px 8px;border-radius:6px;font-size:0.85em;font-weight:bold">${emoji} ${t.agent}</span>
+                        </td>
+                        <td style="padding:10px;max-width:400px">
+                            <span title="${t.task.replace(/"/g,'&quot;')}" style="cursor:help">${taskShort}</span>
+                            ${t.result ? `<div style="color:#3fb950;font-size:0.8em;margin-top:3px">→ ${t.result.length > 80 ? t.result.substring(0,80)+'…' : t.result}</div>` : ''}
+                        </td>
+                        <td style="padding:10px;text-align:center">
+                            <span style="color:${priorityColor};font-weight:bold">P${t.priority}</span>
+                        </td>
+                        <td style="padding:10px">${statusBadge(t.status)}</td>
+                        <td style="padding:10px">${progressBar(t.progress || 0)}</td>
+                        <td style="padding:10px;color:#555;font-size:0.85em">${created}</td>
+                        <td style="padding:10px;white-space:nowrap">
+                            ${canSetDone ? `<button class="btn" style="padding:4px 8px;font-size:0.75em;background:#003a00;color:#3fb950" onclick="setTaskStatus(${t.id},'done')">✅ Done</button>` : ''}
+                            ${canStop ? `<button class="btn" style="padding:4px 8px;font-size:0.75em;background:#3a0000;color:#ff4757" onclick="stopAgentTask(${t.id})">🛑 Stop</button>` : ''}
+                        </td>
+                    </tr>`;
+                }).join('');
+
+                document.getElementById('workflow-tbody').innerHTML = rows;
+            }).catch(err => {
+                document.getElementById('workflow-tbody').innerHTML =
+                    `<tr><td colspan="8" style="color:#ff4757;padding:20px">Ladefehler: ${err}</td></tr>`;
+            });
+        }
+
+        function openAgentTaskModal() {
+            document.getElementById('agent-task-modal').classList.add('active');
+            document.getElementById('at-task').value = '';
+            document.getElementById('at-agent').value = 'apollon';
+            document.getElementById('at-priority').value = '7';
+        }
+
+        function closeAgentTaskModal() {
+            document.getElementById('agent-task-modal').classList.remove('active');
+        }
+
+        function saveAgentTask() {
+            const task = document.getElementById('at-task').value.trim();
+            if (!task) { alert('Task-Beschreibung darf nicht leer sein!'); return; }
+            const payload = {
+                agent: document.getElementById('at-agent').value,
+                task: task,
+                priority: parseInt(document.getElementById('at-priority').value),
+                created_by: 'iggy'
+            };
+            fetch('/api/db/tasks', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            }).then(r => r.json()).then(data => {
+                if (data.status === 'success') {
+                    closeAgentTaskModal();
+                    loadAgentTasks();
+                } else {
+                    alert('Fehler: ' + (data.message || 'Unbekannt'));
+                }
+            });
+        }
+
+        function stopAgentTask(id) {
+            if (!confirm(`Task #${id} wirklich stoppen?`)) return;
+            fetch(`/api/db/tasks/${id}/stop`, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status !== 'success') alert('Fehler: ' + (data.message || ''));
+                    loadAgentTasks();
+                });
+        }
+
+        function setTaskStatus(id, status) {
+            fetch(`/api/db/tasks/${id}/status`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ status })
+            }).then(r => r.json()).then(data => {
+                if (data.status !== 'success') alert('Fehler: ' + (data.message || ''));
+                loadAgentTasks();
+            });
+        }
+
+        function toggleAutoRefresh() {
+            const checked = document.getElementById('workflow-autorefresh')?.checked;
+            if (checked) {
+                workflowTimer = setInterval(loadAgentTasks, 10000);
+            } else {
+                if (workflowTimer) { clearInterval(workflowTimer); workflowTimer = null; }
+            }
+        }
+
+        // ========== AGENT FUNCTIONS ==========
+        function loadAgents() {
+            fetch('/api/agents/status').then(r => r.json()).then(data => {
+                if (data.zerberus) {
+                    document.getElementById('zerberus-tasks').textContent = data.zerberus.tasks + ' pending';
+                }
+                if (data.orpheus) {
+                    document.getElementById('orpheus-certs').textContent = data.orpheus.certs + ' active';
+                }
+                if (data.athene) {
+                    document.getElementById('athene-pnl').textContent = data.athene.pnl;
+                    document.getElementById('athene-trades').textContent = data.athene.trades;
+                }
+                if (data.hestia) {
+                    document.getElementById('hestia-vip').textContent = data.hestia.vip_pending;
+                }
+            }).catch(e => console.log('Agent status unavailable:', e));
+        }
+        
+        function agentAction(agent, action) {
+            if (action === 'stop' && !confirm('Emergency stop für ALLE Agenten?')) return;
+            
+            if (action === 'report') {
+                // Show report in modal
+                fetch('/api/agents/' + agent + '/report').then(r => r.json()).then(data => {
+                    if (data.error) {
+                        alert('Error: ' + data.error);
+                    } else {
+                        document.getElementById('report-content').innerHTML = data.report;
+                        document.getElementById('report-modal').style.display = 'block';
+                    }
+                }).catch(e => alert('Error: ' + e));
+                return;
+            }
+            
+            fetch('/api/agents/' + agent + '/' + action, {method: 'POST'}).then(r => r.json()).then(data => {
+                const toast = document.getElementById('notification-toast');
+                toast.textContent = agent.toUpperCase() + ': ' + (data.message || data.status);
+                toast.style.display = 'block';
+                setTimeout(() => toast.style.display = 'none', 3000);
+                if (action === 'refresh') loadAgents();
+            }).catch(e => {
+                const toast = document.getElementById('notification-toast');
+                toast.textContent = 'Error: ' + e;
+                toast.style.background = '#ff4757';
+                toast.style.borderColor = '#ff4757';
+                toast.style.display = 'block';
+                setTimeout(() => { 
+                    toast.style.display = 'none'; 
+                    toast.style.background = '#1a1a2e';
+                    toast.style.borderColor = '#00ff88';
+                }, 3000);
+            });
+        }
+        
+        // ============ NETWORK TAB FUNCTIONS ============
+        function loadNetworkDevices() {
+            fetch('/api/network/devices')
+            .then(r => r.json())
+            .then(devices => {
+                const container = document.getElementById('network-devices-container');
+                if (!devices || devices.length === 0) {
+                    container.innerHTML = '<div style="color:#888;grid-column:1/-1;">Keine Geräte gefunden. Starte einen Netzwerk-Scan!</div>';
+                    return;
+                }
+                container.innerHTML = devices.map(d => `
+                    <div class="device-card" onclick="showNetworkDevice('${d.ip}')">
+                        <div class="card-ip">${d.ip}</div>
+                        <div class="card-host">${d.hostname || 'unknown'}</div>
+                        <div class="${d.status?.toLowerCase() === 'up' || d.status?.toLowerCase() === 'online' ? 'status-online' : 'status-offline'}">
+                            ${d.status?.toLowerCase() === 'up' || d.status?.toLowerCase() === 'online' ? '🟢 ONLINE' : '🔴 OFFLINE'}
+                        </div>
+                        <div style="margin-top:8px;color:#666;font-size:0.85em">${d.device_type || '?'}</div>
+                        <div class="card-vendor">${d.vendor || '-'}</div>
+                        <div class="card-mac">MAC: ${d.mac_address ? d.mac_address.substring(0,8) + '...' : '-'}</div>
+                        <div class="card-ports">${d.open_ports ? 'Ports: ' + d.open_ports : 'Ports: None'}</div>
+                        ${d.notes ? `<div class="card-notes">Notes: ${d.notes.substring(0,30)}${d.notes.length > 30 ? '...' : ''}</div>` : ''}
+                    </div>
+                `).join('');
+            })
+            .catch(err => console.error('Network fetch error:', err));
+        }
+
+        // Event delegation for device cards (works even after innerHTML rebuild)
+        document.addEventListener('click', function(e) {
+            const card = e.target.closest('.device-card');
+            if (card && document.getElementById('network').classList.contains('active')) {
+                const ipEl = card.querySelector('.card-ip');
+                if (ipEl) {
+                    const ip = ipEl.textContent.trim();
+                    console.log('Delegated click on card:', ip);
+                    showNetworkDevice(ip);
+                }
+            }
+        });
+
+        function showNetworkDevice(ip) {
+            console.log('Opening modal for IP:', ip);
+            fetch(`/api/network/device/${ip}`)
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById('network-modal-title').textContent = `${d.ip} – ${d.hostname || 'Unknown'}`;
+                document.getElementById('network-modal-body').innerHTML = `
+                    <p><b>Status:</b> ${d.status}</p>
+                    <p><b>Type:</b> ${d.device_type || '-'}</p>
+                    <p><b>MAC (full):</b> ${d.mac_address || '-'}</p>
+                    <p><b>Vendor:</b> ${d.vendor || '-'}</p>
+                    <p><b>Open Ports:</b> ${d.open_ports || 'None'}</p>
+                    <p><b>First Seen:</b> ${d.first_seen || '-'}</p>
+                    <p><b>Last Seen:</b> ${d.last_seen || '-'}</p>
+                    <p><b>Notes (full):</b><br>
+                    <textarea id="network-notes-text" rows="4" style="width:100%; background:#1a1f2e; color:#e0e0ff; border:1px solid #00ff9d;">${d.notes || ''}</textarea></p>
+                    <button onclick="saveNetworkNotes('${d.ip}')" style="margin-top:10px; padding:8px 16px; background:#00ff9d; color:black; border:none; border-radius:6px; cursor:pointer;">Save Notes</button>
+                `;
+                document.getElementById('network-modal').style.display = 'flex';
+            });
+        }
+
+        function saveNetworkNotes(ip) {
+            const notes = document.getElementById('network-notes-text').value;
+            fetch('/api/network/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ip: ip, notes: notes})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Notes saved successfully!');
+                    document.getElementById('network-modal').style.display = 'none';
+                    loadNetworkDevices();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown'));
+                }
+            })
+            .catch(err => alert('Save failed: ' + err));
+        }
+
+        // Close modal on outside click
+        document.getElementById('network-modal')?.addEventListener('click', function(e) {
+            if (e.target === this) this.style.display = 'none';
+        });
+        
+        // ============ MAILS TAB FUNCTIONS ============
+        // ============ HIMALAYA MAIL SUBTAB FUNCTIONS ============
+        let himalayaCurrentSubtab = 'posteingang';
+        let himalayaCache = {};
+
+        function switchHimalayaSubtab(subtab) {
+            himalayaCurrentSubtab = subtab;
+            // Hide all subtab contents
+            document.querySelectorAll('.himalaya-subtab-content').forEach(el => el.style.display = 'none');
+            // Remove active from all subtab buttons
+            document.querySelectorAll('.himalaya-subtab').forEach(el => el.classList.remove('active'));
+            // Show selected subtab content
+            document.getElementById('himalaya-' + subtab).style.display = 'block';
+            document.getElementById('hsub-' + subtab).classList.add('active');
+            // Hide detail panel on switch
+            document.getElementById('himalaya-mail-detail').style.display = 'none';
+            // Load data if not cached
+            loadHimalayaMails(subtab);
+        }
+
+        function loadHimalayaMails(subtab) {
+            const folderMap = { 'posteingang': 'inbox', 'gesendet': 'sent', 'entwurfe': 'drafts' };
+            const folder = folderMap[subtab] || 'inbox';
+            const listId = 'himalaya-' + subtab + '-list';
+            const container = document.getElementById(listId);
+            if (!container) return;
+
+            if (himalayaCache[subtab]) {
+                renderHimalayaList(subtab, himalayaCache[subtab], container, folder);
+                return;
+            }
+
+            container.innerHTML = '<div style="padding: 20px; color: #888; text-align: center;">📡 Lade Mails...</div>';
+
+            fetch('/api/mails/himalaya?folder=' + folder)
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success' && data.emails) {
+                    himalayaCache[subtab] = data.emails;
+                    renderHimalayaList(subtab, data.emails, container, folder);
+                } else {
+                    container.innerHTML = '<div style="padding: 20px; color: #ff4757; text-align: center;">⚠️ Fehler: ' + (data.error || 'unbekannt') + '</div>';
+                }
+            })
+            .catch(err => {
+                container.innerHTML = '<div style="padding: 20px; color: #ff4757; text-align: center;">⚠️ API Fehler: ' + err.message + '</div>';
+                console.error('himalaya fetch error:', err);
+            });
+        }
+
+        function renderHimalayaList(subtab, emails, container, folder) {
+            if (!emails || emails.length === 0) {
+                container.innerHTML = '<div style="padding: 20px; color: #888; text-align: center;">📭 Keine Mails vorhanden</div>';
+                return;
+            }
+
+            const html = emails.map(m => {
+                const isRead = m.flags && m.flags.includes('Seen');
+                const dateStr = m.date ? new Date(m.date).toLocaleString('de-DE') : '-';
+                return `<div class="himalaya-mail-item ${isRead ? 'read' : 'unread'}" onclick="readHimalayaMail('${m.id}', '${folder}', '${subtab}')">
+                    <div class="himalaya-mail-from">${m.from || '-'}</div>
+                    <div class="himalaya-mail-subject">${m.subject}</div>
+                    <div class="himalaya-mail-date">${dateStr}</div>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        function readHimalayaMail(envId, folder, subtab) {
+            const detail = document.getElementById('himalaya-mail-detail');
+            const bodyEl = document.getElementById('himalaya-detail-body');
+            const subjectEl = document.getElementById('himalaya-detail-subject');
+            const metaEl = document.getElementById('himalaya-detail-meta');
+
+            // Show loading state
+            detail.style.display = 'block';
+            subjectEl.textContent = '⏳ Lade...';
+            metaEl.textContent = '';
+            bodyEl.textContent = '';
+
+            const folderMap = { 'posteingang': 'inbox', 'gesendet': 'sent', 'entwurfe': 'drafts' };
+            const folderKey = folderMap[subtab] || 'inbox';
+
+            fetch('/api/mails/himalaya/read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: envId, folder: folderKey })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Get subject from cached email
+                    const cached = himalayaCache[subtab] || [];
+                    const m = cached.find(e => e.id === envId);
+                    subjectEl.textContent = m ? m.subject : data.subject || '(kein Betreff)';
+                    metaEl.textContent = m ? `Von: ${m.from} | Datum: ${new Date(m.date).toLocaleString('de-DE')}` : '';
+                    bodyEl.textContent = data.body || '(kein Inhalt)';
+                } else {
+                    subjectEl.textContent = '⚠️ Fehler beim Laden';
+                    bodyEl.textContent = data.error || 'Unbekannter Fehler';
+                }
+            })
+            .catch(err => {
+                subjectEl.textContent = '⚠️ Netzwerkfehler';
+                bodyEl.textContent = 'Fehler: ' + err.message;
+            });
+        }
+
+        function closeHimalayaDetail() {
+            document.getElementById('himalaya-mail-detail').style.display = 'none';
+        }
+
+        // ============ RHEINGOLD MAIL FUNCTIONS ============
+        function loadMails(filter) {
+            const url = '/api/rheingold/mails' + (filter && filter !== 'all' ? '?status=' + filter : '');
+            fetch(url)
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(mails => {
+                const tbody = document.getElementById('mails-tbody');
+                if (mails.error) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;color:#ff4444;">Fehler: ' + mails.error + '</td></tr>';
+                    return;
+                }
+                if (!mails || mails.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #888;">Keine Mails gefunden</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = mails.map(m => `
+                    <tr onclick="openMailModal(${m.id})" style="cursor: pointer; border-bottom: 1px solid #222;">
+                        <td style="padding: 10px;">${m.an}</td>
+                        <td style="padding: 10px;">${m.betreff}</td>
+                        <td style="padding: 10px;" class="status-${m.status}">${m.status}</td>
+                        <td style="padding: 10px;">${m.erstellt_am ? new Date(m.erstellt_am).toLocaleDateString('de-DE') : '-'}</td>
+                        <td style="padding: 10px;">
+                            <button onclick="event.stopPropagation(); openMailModal(${m.id})" style="padding: 5px 10px; background: #00ff9d; color: black; border: none; border-radius: 3px;">✏️</button>
+                        </td>
+                    </tr>
+                `).join('');
+                const drafts = mails.filter(m => m.status === 'entwurf' || m.status === 'bereit').length;
+                document.getElementById('mail-counter').textContent = drafts;
+            })
+            .catch(err => {
+                const tbody = document.getElementById('mails-tbody');
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;color:#ff4444;">⚠️ API nicht erreichbar: ' + err.message + '</td></tr>';
+                console.error('loadMails error:', err);
+            });
+        }
+        
+        // Auto-load mails on page load if mails tab is active
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('mails') && document.getElementById('mails').classList.contains('active')) {
+                loadMails('all');
+            }
+        });
+
+        // ============ LOGS FUNCTIONS ============
+        // Global filter state
+        let logFilters = { agent: '', level: '' };
+        
+        function filterLogs(type, value) {
+            logFilters[type] = value;
+            
+            // Update button states
+            document.querySelectorAll('.log-btn').forEach(btn => btn.classList.remove('active'));
+            if (type === 'agent') {
+                const btnId = value ? 'btn-' + value.toLowerCase() : 'btn-all';
+                const btn = document.getElementById(btnId);
+                if (btn) btn.classList.add('active');
+            }
+            
+            loadLogs();
+        }
+        
+        function loadLogs() {
+            let url = '/api/logs';
+            const params = new URLSearchParams();
+            if (logFilters.agent) params.append('agent', logFilters.agent);
+            if (logFilters.level) params.append('level', logFilters.level);
+            if (params.toString()) url += '?' + params.toString();
+            
+            fetch(url)
+            .then(r => r.json())
+            .then(logs => {
+                const tbody = document.getElementById('logs-tbody');
+                if (!tbody) return;
+                if (!logs || logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #888;">Keine Logs gefunden</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = logs.map(l => `
+                    <tr style="border-bottom: 1px solid #222;">
+                        <td style="padding: 8px; font-size: 12px; color: #888;">${l.timestamp ? new Date(l.timestamp).toLocaleString('de-DE') : '-'}</td>
+                        <td style="padding: 8px;"><span style="background: #333; padding: 2px 8px; border-radius: 3px;">${l.agent || '-'}</span></td>
+                        <td style="padding: 8px;" class="level-${l.level}">${l.level || '-'}</td>
+                        <td style="padding: 8px; font-family: monospace; font-size: 12px;">${l.message || ''}</td>
+                    </tr>
+                `).join('');
+                const counterEl = document.getElementById('log-counter');
+                if (counterEl) counterEl.textContent = logs.length;
+            })
+            .catch(err => {
+                const errEl = document.getElementById('logs-tbody');
+                if (errEl) errEl.innerHTML = '<tr><td colspan="4" style="padding:20px;color:#ff4444;">⚠️ Fehler: ' + err.message + '</td></tr>';
+            });
+        }
+
+        function openMailModal(id) {
+            console.log('Opening mail modal for ID:', id);
+            fetch('/api/rheingold/mail/' + id)
+            .then(r => {
+                console.log('Mail fetch status:', r.status);
+                return r.json();
+            })
+            .then(m => {
+                document.getElementById('mail-id').value = m.id;
+                document.getElementById('mail-to').value = m.an;
+                document.getElementById('mail-subject').value = m.betreff;
+                document.getElementById('mail-body').value = m.text_final || m.text_entwurf;
+                document.getElementById('mail-modal').style.display = 'flex';
+            });
+        }
+
+        function saveMail() {
+            const id = document.getElementById('mail-id').value;
+            fetch('/api/rheingold/mail/' + id, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    an: document.getElementById('mail-to').value,
+                    betreff: document.getElementById('mail-subject').value,
+                    text_final: document.getElementById('mail-body').value
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                alert('💾 Gespeichert!');
+                loadMails('all');
+                document.getElementById('mail-modal').style.display = 'none';
+            });
+        }
+
+        function sendMail() {
+            if (!confirm('M wirklich SENDEN?')) return;
+            const id = document.getElementById('mail-id').value;
+            fetch('/api/rheingold/mail/send/' + id, {method: 'POST'})
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ Gesendet am ' + new Date(data.sent_at).toLocaleString('de-DE'));
+                    loadMails('all');
+                    document.getElementById('mail-modal').style.display = 'none';
+                } else {
+                    alert('❌ Fehler: ' + (data.error || 'Unbekannt'));
+                }
+            })
+            .catch(err => alert('❌ Netzwerk-Fehler: ' + err));
+        }
+
+        function deleteMail() {
+            if (!confirm('M wirklich LÖSCHEN?')) return;
+            const id = document.getElementById('mail-id').value;
+            fetch('/api/rheingold/mail/' + id, {method: 'DELETE'})
+            .then(r => r.json())
+            .then(data => {
+                alert('🗑 Gelöscht');
+                loadMails('all');
+                document.getElementById('mail-modal').style.display = 'none';
+            });
+        }
+
+        // Close mail modal on outside click
+        document.getElementById('mail-modal')?.addEventListener('click', function(e) {
+            if (e.target === this) this.style.display = 'none';
+        });
+    
+        let rheingoldLoaded = false;
+        async function loadRheingoldTab() {
+            var frame = document.getElementById('rheingold-frame');
+            if (!frame || rheingoldLoaded) return;
+            frame.innerHTML = '<div style="padding:40px;color:#64748b;text-align:center">Lade...</div>';
+            try {
+                var r = await fetch('/rheingold/content');
+                var html = await r.text();
+                frame.innerHTML = html;
+                frame.querySelectorAll('script').forEach(function(s) {
+                    var n = document.createElement('script');
+                    n.textContent = s.textContent;
+                    document.body.appendChild(n);
+                    s.remove();
+                });
+                rheingoldLoaded = true;
+            } catch(e) {
+                frame.innerHTML = '<div style="padding:40px;color:#ef4444">Fehler: ' + e.message + '</div>';
+            }
+        }
+
+        // ============ IFG TAB ============
+        let ifgData = null;
+
+        async function loadIFGTab() {
+            const container = document.getElementById('ifg-list');
+            container.innerHTML = '<div style="text-align:center;padding:40px;color:#888">IFG-Daten werden geladen...</div>';
+            try {
+                const resp = await fetch('/api/ifg');
+                const data = await resp.json();
+                if (data.status !== 'success') {
+                    container.innerHTML = '<div style="padding:20px;color:#ef4444">Fehler: ' + (data.message || 'Unbekannt') + '</div>';
+                    return;
+                }
+                ifgData = data.requests;
+                renderIFGList(container, data.requests);
+            } catch(e) {
+                container.innerHTML = '<div style="padding:20px;color:#ef4444">Fehler beim Laden: ' + e.message + '</div>';
+            }
+        }
+
+        function renderIFGList(container, requests) {
+            let html = '';
+            for (const req of requests) {
+                const statusColor = getIFGStatusColor(req.status);
+                const statusBadge = `<span style="background:${statusColor};color:#000;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:bold">${req.status || 'offen'}</span>`;
+                const fristHTML = req.frist_am ? `<span style="color:${new Date(req.frist_am) < new Date() ? '#ef4444' : '#00ff88'};font-size:12px">Frist: ${req.frist_am ? req.frist_am.substring(0,10) : '-'}</span>` : '';
+
+                html += `<div style="background:#111;border:1px solid #222;border-radius:10px;margin-bottom:12px;overflow:hidden">`;
+                html += `<div style="padding:15px 20px;border-bottom:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">`;
+                html += `<div><strong style="color:#00ff88">IFG #${req.id}</strong> — ${req.behoerde || ''} ${statusBadge}</div>`;
+                html += `<div>${fristHTML}</div>`;
+                html += `</div>`;
+
+                if (req.titel) {
+                    html += `<div style="padding:5px 20px;color:#999;font-size:13px">${req.titel}</div>`;
+                }
+
+                // Mails section
+                if (req.mails && req.mails.length > 0) {
+                    for (const mail of req.mails) {
+                        const mailStatusColor = mail.status === 'gesendet' ? '#22c55e' : mail.status === 'bereit_zum_senden' ? '#f59e0b' : '#666';
+                        html += `<div style="padding:10px 20px;border-top:1px solid #1a1a1a">`;
+                        html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">`;
+                        html += `<div style="font-size:13px"><span style="color:#888">Mail #${mail.id}:</span> <span style="color:#fff">${mail.betreff || ''}</span></div>`;
+                        html += `<span style="background:${mailStatusColor};color:#000;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:bold">${mail.status}</span>`;
+                        html += `</div>`;
+                        html += `<div style="font-size:12px;color:#888">An: ${mail.an || '-'} | Erstellt: ${mail.erstellt_am ? mail.erstellt_am.substring(0,16).replace('T',' ') : '-'}`;
+                        if (mail.gesendet_am) {
+                            html += ` | Gesendet: ${mail.gesendet_am.substring(0,16).replace('T',' ')}`;
+                        }
+                        html += `</div>`;
+
+                        // Send button for drafts/ready-to-send
+                        if (mail.status === 'bereit_zum_senden' || mail.status === 'entwurf') {
+                            html += `<div style="margin-top:8px;display:flex;gap:8px">`;
+                            html += `<button onclick="previewIFGMail(${req.id}, ${mail.id})" style="background:#333;color:#fff;border:1px solid #444;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px">👁 Vorschau</button>`;
+                            html += `<button onclick="confirmIFGSend(${req.id}, ${mail.id}, '${mail.an}', '${(mail.betreff||'').replace(/'/g, "\\'")}')" style="background:#dc2626;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold">📤 Absenden</button>`;
+                            html += `</div>`;
+                        }
+                        html += `</div>`;
+                    }
+                } else {
+                    html += `<div style="padding:10px 20px;color:#666;font-size:13px">Keine Mails vorhanden</div>`;
+                }
+                html += `</div>`;
+            }
+            container.innerHTML = html || '<div style="padding:20px;color:#888">Keine IFG-Anfragen gefunden.</div>';
+        }
+
+        function getIFGStatusColor(status) {
+            const colors = {
+                'offen': '#6b7280',
+                'entwurf': '#6b7280',
+                'gesendet': '#22c55e',
+                'beschwerde_gesendet': '#22c55e',
+                'beschwerde_gesendet_final': '#22c55e',
+                'beantwortet': '#3b82f6',
+                'beantwortet_teilweise': '#f59e0b',
+                'bescheid_erhalten': '#8b5cf6',
+                'bereit_zum_senden': '#f59e0b',
+                'bereit': '#f59e0b',
+                'widerspruch_eingereicht': '#ef4444',
+                'in Bearbeitung': '#3b82f6',
+                'versandt_einschreiben': '#22c55e'
+            };
+            return colors[status] || '#6b7280';
+        }
+
+        async function previewIFGMail(ifgId, mailId) {
+            try {
+                const resp = await fetch(`/api/ifg/${ifgId}`);
+                const data = await resp.json();
+                if (data.status !== 'success') { alert('Fehler: ' + data.message); return; }
+                const mail = data.ifg.mails.find(m => m.id === mailId);
+                if (!mail) { alert('Mail nicht gefunden'); return; }
+                const body = mail.text_final || mail.text_entwurf || '(Kein Text)';
+                const previewHTML = `
+                    <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">
+                        <div style="background:#1a1a1a;border:1px solid #333;border-radius:12px;width:90%;max-width:700px;max-height:80vh;overflow:auto;padding:25px">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:15px">
+                                <h3 style="color:#00ff88;margin:0">Mail-Vorschau #${mail.id}</h3>
+                                <button onclick="this.closest('div[style*=fixed]').remove()" style="background:#333;color:#fff;border:none;padding:5px 15px;border-radius:6px;cursor:pointer">✕</button>
+                            </div>
+                            <div style="margin-bottom:10px;padding:10px;background:#111;border-radius:8px">
+                                <div style="color:#888;font-size:12px;margin-bottom:3px">Von:</div>
+                                <div style="color:#fff">[NAME] &lt;investigativ@abydon.com&gt;</div>
+                                <div style="color:#888;font-size:12px;margin-top:8px;margin-bottom:3px">An:</div>
+                                <div style="color:#fff">${mail.an}</div>
+                                <div style="color:#888;font-size:12px;margin-top:8px;margin-bottom:3px">BCC:</div>
+                                <div style="color:#fff">[EMAIL]</div>
+                                <div style="color:#888;font-size:12px;margin-top:8px;margin-bottom:3px">Betreff:</div>
+                                <div style="color:#00ff88;font-weight:bold">${mail.betreff}</div>
+                            </div>
+                            <div style="white-space:pre-wrap;font-size:13px;color:#ddd;background:#0d0d0d;padding:15px;border-radius:8px;border:1px solid #222">${body.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                            <div style="margin-top:15px;text-align:right">
+                                <button onclick="confirmIFGSend(${ifgId}, ${mailId}, '${mail.an}', '${(mail.betreff||'').replace(/'/g, "\\'")}');this.closest('div[style*=fixed]').remove()" style="background:#dc2626;color:#fff;border:none;padding:10px 25px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:14px">📤 Absenden</button>
+                            </div>
+                        </div>
+                    </div>`;
+                document.body.insertAdjacentHTML('beforeend', previewHTML);
+            } catch(e) {
+                alert('Fehler bei Vorschau: ' + e.message);
+            }
+        }
+
+        function confirmIFGSend(ifgId, mailId, toEmail, subject) {
+            const confirmed = confirm(`Soll diese Mail jetzt final abgesendet werden?\n\nAn: ${toEmail}\nBetreff: ${subject}\nBCC: [EMAIL]\n\n⚠️ Diese Aktion kann nicht rückgängig gemacht werden!`);
+            if (!confirmed) return;
+            sendIFGMail(ifgId, mailId);
+        }
+
+        async function sendIFGMail(ifgId, mailId) {
+            try {
+                const resp = await fetch(`/api/ifg/${ifgId}/mail/${mailId}/send`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({bcc: '[EMAIL]'})
+                });
+                const data = await resp.json();
+                if (data.status === 'success') {
+                    alert(`✅ Mail erfolgreich gesendet!\nAn: ${data.sent_to}\nBCC: ${data.bcc}\nZeit: ${data.sent_at}`);
+                    loadIFGTab(); // Refresh
+                } else {
+                    alert('❌ Fehler beim Senden: ' + (data.message || 'Unbekannt'));
+                }
+            } catch(e) {
+                alert('❌ Netzwerkfehler: ' + e.message);
+            }
+        }
+</script>
+</body>
+</html>

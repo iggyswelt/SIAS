@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Athena Hyperopt Queue — MetaMaus</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;800&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #18181f;
+    --border: #2a2a35;
+    --accent: #00ff88;
+    --accent2: #7c6cff;
+    --warn: #ffb800;
+    --danger: #ff4757;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --card: #13131a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* HEADER */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg2);
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+  .breadcrumb {
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .breadcrumb a {
+    color: var(--accent2);
+    text-decoration: none;
+  }
+
+  /* SUBTABS */
+  .subtabs {
+    display: flex;
+    gap: 4px;
+    padding: 12px 28px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+  }
+  .subtab {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .subtab:hover {
+    color: var(--text);
+    background: var(--bg3);
+  }
+  .subtab.active {
+    background: var(--accent2);
+    color: #fff;
+  }
+
+  /* PROGRESS BAR */
+  .progress-section {
+    padding: 24px 28px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+  }
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .progress-title {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .progress-stats {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .progress-stats span {
+    margin-left: 12px;
+  }
+  .progress-stats .done { color: var(--accent); }
+  .progress-stats .running { color: #4da6ff; }
+  .progress-stats .pending { color: var(--warn); }
+  .progress-stats .error { color: var(--danger); }
+  .progress-bar {
+    height: 8px;
+    background: var(--bg3);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  /* QUEUE TABLE */
+  .queue-container {
+    padding: 24px 28px;
+  }
+  .queue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .queue-title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    color: var(--muted);
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  tr:hover td {
+    background: var(--bg2);
+  }
+
+  /* STATUS BADGES */
+  .status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  .status.done {
+    background: rgba(0, 255, 136, 0.15);
+    color: var(--accent);
+  }
+  .status.running {
+    background: rgba(77, 166, 255, 0.15);
+    color: #4da6ff;
+  }
+  .status.pending {
+    background: rgba(255, 184, 0, 0.15);
+    color: var(--warn);
+  }
+  .status.error {
+    background: rgba(255, 71, 87, 0.15);
+    color: var(--danger);
+  }
+  .status.skipped {
+    background: rgba(107, 107, 128, 0.15);
+    color: var(--muted);
+  }
+
+  .priority {
+    color: var(--muted);
+  }
+  .strategy {
+    color: var(--text);
+    font-weight: 500;
+  }
+  .date {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  /* EMPTY STATE */
+  .empty {
+    text-align: center;
+    padding: 48px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">🦅 ATHENA</div>
+      <div class="breadcrumb">
+        <a href="/">Dashboard</a> / <a href="/">Trading</a> / Athena
+      </div>
+    </div>
+  </div>
+
+  <div class="subtabs">
+    <a href="/trading" class="subtab">📊 Overview</a>
+    <a href="/trading/backtests" class="subtab">📈 Backtests</a>
+    <a href="/trading/athena" class="subtab active">🦅 Athena</a>
+    <a href="#" class="subtab" style="color:#555;cursor:default;">💹 Live</a>
+  </div>
+
+  <div class="progress-section">
+    <div class="progress-header">
+      <div class="progress-title">📋 Hyperopt Queue Progress</div>
+      <div class="progress-stats">
+        <span class="done">✓ {{ stats.done }} done</span>
+        <span class="running">⟳ {{ stats.running }} running</span>
+        <span class="pending">⏳ {{ stats.pending }} pending</span>
+        <span class="skipped">⊘ {{ stats.skipped|default(0) }} skipped</span>
+        {% if stats.error > 0 %}<span class="error">✕ {{ stats.error }} error</span>{% endif %}
+        <span>→ {{ stats.total }} total</span>
+      </div>
+    </div>
+    <div class="progress-bar">
+      {% if stats.total > 0 %}
+      <div class="progress-fill" style="width: {{ (stats.done / stats.total * 100)|round }}%"></div>
+      {% else %}
+      <div class="progress-fill" style="width: 0%"></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="queue-container">
+    <div class="queue-header">
+      <div class="queue-title">🎯 Job Queue</div>
+    </div>
+    
+    {% if queue %}
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Strategie</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Gestartet</th>
+          <th>Beendet</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for job in queue %}
+        <tr>
+          <td class="id">#{{ job.id }}</td>
+          <td class="strategy">{{ job.strategie }}</td>
+          <td><span class="status {{ job.status }}">{{ job.status }}</span></td>
+          <td class="priority">{{ job.priority }}</td>
+          <td class="date">{{ job.started_at if job.started_at else '-' }}</td>
+          <td class="date">{{ job.finished_at if job.finished_at else '-' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">
+      <p>Keine Jobs in der Queue</p>
+    </div>
+    {% endif %}
+  </div>
+</body>
+</html>

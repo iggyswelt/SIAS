@@ -1,0 +1,52 @@
+<div class="card cyber-card" id="orpheus-widget">
+    <div class="card-header">
+        <span class="status-dot online"></span> ORPHEUS PKI & BACKUP STATUS
+    </div>
+    <div class="card-body">
+        <div class="metric-row">
+            <div class="metric">
+                <span class="metric-value" id="orpheus-certs-active">-</span>
+                <span class="metric-label">Certs Active</span>
+            </div>
+            <div class="metric">
+                <span class="metric-value warning" id="orpheus-expiring">-</span>
+                <span class="metric-label">Expiring (30d)</span>
+            </div>
+        </div>
+        <div class="metric-row">
+            <div class="metric">
+                <span class="metric-value" id="orpheus-hsm">-</span>
+                <span class="metric-label">Nitrokey HSM</span>
+            </div>
+            <div class="metric">
+                <span class="metric-value" id="orpheus-backup-time">-</span>
+                <span class="metric-label">Last Backup</span>
+            </div>
+        </div>
+        <div class="metric-row">
+            <div class="metric full">
+                <span class="metric-value" id="orpheus-nas-count">-</span>
+                <span class="metric-label">Backups on NAS</span>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button class="btn btn-primary btn-sm" onclick="refreshOrpheus()">Refresh</button>
+            <button class="btn btn-secondary btn-sm" onclick="viewOrpheusLogs()">Logs</button>
+            <button class="btn btn-warning btn-sm" onclick="emergencyBackup()">Emergency Stop</button>
+        </div>
+    </div>
+</div>
+<script>
+async function refreshOrpheus() {
+    try {
+        const res = await fetch('/api/orpheus/report');
+        const data = await res.json();
+        document.getElementById('orpheus-certs-active').textContent = data.certs_active || 0;
+        document.getElementById('orpheus-expiring').textContent = data.expiring_30d || 0;
+        document.getElementById('orpheus-hsm').textContent = data.hsm_status || 'N/A';
+        document.getElementById('orpheus-backup-time').textContent = data.last_backup_time || 'Never';
+        document.getElementById('orpheus-nas-count').textContent = data.backup_count || 0;
+    } catch(e) { console.error(e); }
+}
+refreshOrpheus();
+</script>
