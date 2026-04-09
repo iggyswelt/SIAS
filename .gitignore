@@ -1,0 +1,8 @@
+
+dashboard_prod/
+dashboard_v2/
+agent_configs/
+*.env
+*.secrets
+adm/
+backups/
