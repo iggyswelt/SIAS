@@ -1,4 +1,4 @@
-# SIAS — Super Intelligent Agent System
+# SIAS — Self Improving Agent System
 
 **DE:** SIAS ist ein event-gesteuertes Multi-Agent-System, gebaut auf OpenClaw. Agenten kommunizieren über einen Redis Event Bus, PostgreSQL ist die einzige Source of Truth.
 
