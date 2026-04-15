@@ -99,3 +99,47 @@ Dreaming + SIAS Integration: Konkreter Vorschlag ausgearbeitet.
 [APOLLON 13:31] ARTH-CLEANUP fertig
 [APOLLON 14:45] ARTH-NETZWERK-FARBEN fertig
 [APOLLON 14:57] ARTH-FALLAKTE-LINK fertig
+[ORPHEUS 16:03] ARTH-MILESTONE-BACKUP fertig
+[APOLLON 19:52] ARTH-FALLAKTE-FIX2 fertig
+[ARTHEMIS 20:21] ARTH-DASHBOARD-V4-2026-0414 fertig
+[SYSTEM 20:21] Action triggered: Arthemis Task fertig
+[SYSTEM 20:21] Action triggered: Arthemis Report erkannt — bitte lesen und umsetzen
+[ORPHEUS 20:31] DASHBOARD-V4 PHASE 1-4 fertig — Port 5010, alle Tabs aktiv
+[APOLLON 21:48] V4-FIXES fertig
+[APOLLON 21:50] V4-FIXES fertig
+[ORPHEUS 10:03] ARTH-SUBTABS fertig — alle 3 Filter-Endpoints 200 OK
+[RHEINGOLD 10:11] AMADEU-ANTONIO-FOERDERBILANZ fertig: 841 Projekte 2020-2026 in DB
+[HERMES 10:26] OSR-AMAS-2026 fertig
+[HERMES 10:28] OSR-AMAS-2025 fertig
+[HERMES 10:30] OSR-AMAS-2024 fertig
+[OSR] AAS Jahresabschlüsse gesichert
+[APOLLON 12:59] ARTH-MEDIEN-TAB fertig
+[RHEINGOLD 13:00] OSR-MEDIEN-RECHERCHE fertig
+[RHEINGOLD 16:21] OSR-HATEAID-DEEPDIVE fertig
+[RHEINGOLD 16:37] OSR-HATEAID-MEDIEN fertig
+
+[SYSTEM 17:02] Action triggered: MetaMaus Task — Dashboard Fixes (Priorität 1-5)
+
+=== SOFORT-TASKS (NIEDRIGE SCHWIERIGKEIT) ===
+
+MT-001 | DASHBOARD-OPENCLAW-ICON | OpenClaw Gateway wird als rot angezeigt obwohl aktiv → Health-Check / Connection-String in dashboard_prod prüfen und fixen
+MT-002 | DASHBOARD-DB-GROESSE | Datenbankgröße auf Landingpage einblenden → pg_database_size() in dashboard_prod这种人
+MT-003 | DASHBOARD-HERMES-ICON | Hermes-Icon fehlerhaft → Asset-Pfad in dashboard_prod这种人
+MT-004 | DASHBOARD-ACP-RENAME | Inter-Agent-Chat → ACP umbennen in dashboard这种人
+MT-005 | DASHBOARD-5003-STATS | Stats von Port 5003 (Pending/Running/Done/Total/Gestoppt) auf aktuelles Dashboard übertragen
+
+=== MITTLERE TASKS ===
+
+MT-006 | DASHBOARD-TOKEN-USAGE | Token Usage zeigt nichts → DB-Abfrage für token_usage_history这种人
+MT-007 | DASHBOARD-TASK-CLICK | Task-Seite: Klick für mehr Details (Popup)这种人
+MT-008 | DASHBOARD-AGENTS-INTERAKTIV | Agents klickbar machen + Modell-Anzeige这种人
+MT-009 | DASHBOARD-DEMO-SEITE | Demo-Seite: "Schwachsinn" entfernen, alte Demo-Seite wiederherstellen这种人
+
+=== HOHE PRIORITÄT ===
+
+MT-010 | YOUTUBE-VIDEOS-AKTUELL | YouTube: Letzte Videos anzeigen + Kommentarsektion这种人
+MT-011 | YOUTUBE-GESAMTZAHL | Videos gesamt-Zähler aktualisieren这种人
+
+=== ANMERKUNG VON IGGY ===
+Port 5004 und 5002 unangetastet. Das sind Arthemis-Regeln.
+Metamaus leads the way — ALL the way.
