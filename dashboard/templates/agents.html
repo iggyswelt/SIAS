@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>🤖 Agent Team</h1>
+
+<style>
+.agent-card{cursor:pointer;transition:transform .15s,box-shadow .15s;position:relative}
+.agent-card:hover{transform:translateY(-3px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.agent-model{color:var(--text2);font-size:.7rem;margin-top:2px;font-family:monospace}
+.agent-provider{background:rgba(0,255,136,.12);color:var(--success);padding:1px 6px;border-radius:3px;font-size:.65rem;margin-left:4px}
+.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.status-dot.running{background:#22c55e}
+.status-dot.error{background:#ef4444}
+.status-dot.unknown{background:#6b7280}
+#agent-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
+#agent-modal.open{display:flex}
+#agent-modal .modal-body{background:var(--card);border-radius:12px;padding:2rem;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;border:1px solid var(--border)}
+.fallback-tag{display:inline-block;background:rgba(234,179,8,.12);color:#eab308;padding:2px 8px;border-radius:4px;font-size:.75rem;margin:2px}
+.fallback-active-banner{background:rgba(234,179,8,.15);border:1px solid #eab308;color:#eab308;padding:.5rem;border-radius:6px;font-size:.85rem;margin-bottom:1rem}
+</style>
+
+<div class="grid">
+  <div class="card agent-card" onclick="showAgentDetail('metamaus','🐭','Metamaus','Team Leader & Strategie')"><div style="font-size:2rem">🐭</div><div class="agent-name">Metamaus</div><div class="agent-role">Team Leader & Strategie</div><div class="agent-model" id="model-metamaus"></div><span class="badge badge-running">Online</span></div>
+  <div class="card agent-card" onclick="showAgentDetail('apollon','🔧','Apollon','Dev & Automation')"><div style="font-size:2rem">🔧</div><div class="agent-name">Apollon</div><div class="agent-role">Dev & Automation</div><div class="agent-model" id="model-apollon"></div><span class="badge badge-running">Online</span></div>
+  <div class="card agent-card" onclick="showAgentDetail('athene','🦉','Athene','Trading & Research')"><div style="font-size:2rem">🦉</div><div class="agent-name">Athene</div><div class="agent-role">Trading & Research</div><div class="agent-model" id="model-athene"></div><span class="badge badge-running">Online</span></div>
+  <div class="card agent-card" onclick="showAgentDetail('rheingold','🔍','Rheingold','OSINT & IFG')"><div style="font-size:2rem">🔍</div><div class="agent-name">Rheingold</div><div class="agent-role">OSINT & IFG</div><div class="agent-model" id="model-rheingold"></div><span class="badge badge-running">Online</span></div>
+  <div class="card agent-card" onclick="showAgentDetail('pythia','🎭','Pythia','Audit & QA')"><div style="font-size:2rem">🎭</div><div class="agent-name">Pythia</div><div class="agent-role">Audit & QA</div><div class="agent-model" id="model-pythia"></div><span class="badge badge-running">Online</span></div>
+  <div class="card agent-card" onclick="showAgentDetail('hermes','🪽','Hermes','Scraping & Research')"><div style="font-size:2rem">🪽</div><div class="agent-name">Hermes</div><div class="agent-role">Scraping & Research</div><div class="agent-model" id="model-hermes"></div><span class="badge badge-running">Online</span></div>
+  <div class="card agent-card" onclick="showAgentDetail('hestia','🎬','Hestia','YouTube Pipeline')"><div style="font-size:2rem">🎬</div><div class="agent-name">Hestia</div><div class="agent-role">YouTube Pipeline</div><div class="agent-model" id="model-hestia"></div><span class="badge badge-running">Online</span></div>
+  <div class="card agent-card" onclick="showAgentDetail('zerberus','🛡️','Zerberus','Security & Infra')"><div style="font-size:2rem">🛡️</div><div class="agent-name">Zerberus</div><div class="agent-role">Security & Infra</div><div class="agent-model" id="model-zerberus"></div><span class="badge badge-running">Online</span></div>
+  <div class="card agent-card" onclick="showAgentDetail('orpheus','📦','Orpheus','Backup & Vault')"><div style="font-size:2rem">📦</div><div class="agent-name">Orpheus</div><div class="agent-role">Backup & Vault</div><div class="agent-model" id="model-orpheus"></div><span class="badge badge-running">Online</span></div>
+</div>
+
+<!-- Agent Detail Modal -->
+<div id="agent-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal-body">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h2 id="modal-title" style="margin:0"></h2>
+      <button onclick="document.getElementById('agent-modal').classList.remove('open')" style="background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer">✕</button>
+    </div>
+    <div id="modal-fallback-banner"></div>
+    <div id="modal-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem"></div>
+    <div id="modal-model-info" style="margin-bottom:1rem"></div>
+    <h4>Letzte Tasks</h4>
+    <div id="modal-tasks" style="font-size:.85rem"></div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px">
+<h3>📜 Inter-Agent Chat (ICA Log)</h3>
+<div class="log-box">{{ica_log}}</div>
+</div>
+
+<script>
+let agentStats = {};
+fetch('/api/stats/agents').then(r=>r.json()).then(data => {
+  data.forEach(a => {
+    agentStats[a.agent_id] = a;
+    // Update model line in card
+    const el = document.getElementById('model-' + a.agent_id);
+    if (el) {
+      const dot = a.status === 'running' ? 'running' : (a.status === 'error' ? 'error' : 'unknown');
+      el.innerHTML = '<span class="status-dot ' + dot + '"></span>' + (a.model||'?') + '<span class="agent-provider">' + (a.provider||'?') + '</span>';
+    }
+  });
+}).catch(()=>{});
+
+function showAgentDetail(id, emoji, name, role) {
+  document.getElementById('modal-title').textContent = emoji + ' ' + name;
+  const statsEl = document.getElementById('modal-stats');
+  const tasksEl = document.getElementById('modal-tasks');
+  const modelEl = document.getElementById('modal-model-info');
+  const bannerEl = document.getElementById('modal-fallback-banner');
+  const stats = agentStats[id] || {};
+
+  // Status dot
+  const dot = stats.status === 'running' ? 'running' : (stats.status === 'error' ? 'error' : 'unknown');
+  const statusLabel = stats.status === 'running' ? 'Online' : (stats.status === 'error' ? 'Error' : 'Unknown');
+  const statusColor = stats.status === 'running' ? 'var(--success)' : (stats.status === 'error' ? '#ef4444' : '#6b7280');
+
+  statsEl.innerHTML =
+    '<div class="card" style="padding:.5rem"><div style="color:var(--text2);font-size:.75rem">Rolle</div><div style="font-weight:500">'+role+'</div></div>'+
+    '<div class="card" style="padding:.5rem"><div style="color:var(--text2);font-size:.75rem">Tasks</div><div style="font-weight:500">'+(stats.task_count||'—')+'</div></div>'+
+    '<div class="card" style="padding:.5rem"><div style="color:var(--text2);font-size:.75rem">Tokens</div><div style="font-weight:500">'+(stats.tokens||'—')+'</div></div>'+
+    '<div class="card" style="padding:.5rem"><div style="color:var(--text2);font-size:.75rem">Status</div><div style="font-weight:500;color:'+statusColor+'"><span class="status-dot '+dot+'"></span>'+statusLabel+'</div></div>';
+
+  // Model info section
+  if (stats.model) {
+    let modelHtml = '<div class="card" style="padding:.8rem">';
+    modelHtml += '<div style="display:grid;grid-template-columns:auto 1fr;gap:.3rem 1rem;font-size:.85rem">';
+    modelHtml += '<span style="color:var(--text2)">📦 Model:</span><span style="font-family:monospace;font-weight:500;color:var(--success)">'+stats.model+'</span>';
+    modelHtml += '<span style="color:var(--text2)">🏢 Provider:</span><span>'+stats.provider+'</span>';
+    if (stats.fallbacks && stats.fallbacks.length) {
+      modelHtml += '<span style="color:var(--text2)">🔄 Fallbacks:</span><span>' + stats.fallbacks.map(f => '<span class="fallback-tag">'+f+'</span>').join(' ') + '</span>';
+    }
+    modelHtml += '</div></div>';
+    modelEl.innerHTML = modelHtml;
+  } else {
+    modelEl.innerHTML = '';
+  }
+
+  // Fallback active banner (placeholder — could be dynamic later)
+  bannerEl.innerHTML = '';
+
+  tasksEl.innerHTML = '<div style="color:var(--text2)">Lade Tasks...</div>';
+  fetch('/api/tasks?limit=5').then(r=>r.json()).then(data => {
+    const tasks = (data.tasks||data||[]).filter(t => {
+      const assigned = (t.assigned_to||t.agent||'').toLowerCase();
+      return assigned === id || assigned.includes(id);
+    }).slice(0,5);
+    if (tasks.length === 0) {
+      tasksEl.innerHTML = '<div style="color:var(--text2)">Keine Tasks gefunden</div>';
+      return;
+    }
+    tasksEl.innerHTML = '<table style="width:100%;border-collapse:collapse"><tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:.3rem">ID</th><th style="text-align:left;padding:.3rem">Title</th><th style="text-align:left;padding:.3rem">Status</th></tr>' +
+      tasks.map(t => '<tr style="border-bottom:1px solid var(--border)"><td style="padding:.3rem">'+(t.id||'—')+'</td><td style="padding:.3rem">'+((t.title||t.description||'—').substring(0,50))+'</td><td style="padding:.3rem"><span class="badge '+(t.status==='done'?'badge-done':'badge-running')+'">'+(t.status||'—')+'</span></td></tr>').join('') +
+      '</table>';
+  }).catch(err => {
+    tasksEl.innerHTML = '<div style="color:#ef4444">Fehler: '+err.message+'</div>';
+  });
+
+  document.getElementById('agent-modal').classList.add('open');
+}
+</script>
+{% endblock %}

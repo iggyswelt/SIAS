@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>🎬 Demos</h1>
+
+<!-- Stat Cards -->
+<div class="grid" id="demo-stats">
+  <div class="card"><h3>📊 Gesamt Events</h3><div class="stat-value" id="stat-total">—</div><div class="stat-label">Alle Einträge</div></div>
+  <div class="card"><h3>📅 Diese Woche</h3><div class="stat-value" id="stat-week">—</div><div class="stat-label">Kommende 7 Tage</div></div>
+  <div class="card"><h3>📅 Nächste Woche</h3><div class="stat-value" id="stat-nextweek">—</div><div class="stat-label">7–14 Tage</div></div>
+  <div class="card"><h3>✅ Validiert</h3><div class="stat-value" id="stat-valid">—</div><div class="stat-label">Bestätigte Events</div></div>
+</div>
+
+<!-- Demo-Kalender -->
+<h2 style="margin-top:2rem">📋 Demo-Kalender (Live)</h2>
+<div class="card" style="padding:1rem">
+  <div style="display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
+    <label>Filter: <select id="filter-category"><option value="">Alle</option><option value="demo">Demo</option><option value="kundgebung">Kundgebung</option><option value="streik">Streik</option><option value="info">Info</option><option value="sport">Sport</option><option value="kultur">Kultur</option></select></label>
+    <label>Validierung: <select id="filter-validation"><option value="">Alle</option><option value="valid">✅ Valid</option><option value="pending">⏳ Pending</option><option value="invalid">❌ Invalid</option></select></label>
+    <span id="demo-count" style="margin-left:auto;color:var(--text2)">Laden...</span>
+  </div>
+  <div style="overflow-x:auto">
+    <table id="demo-table" style="width:100%;border-collapse:collapse;font-size:.85rem">
+      <thead><tr style="border-bottom:2px solid var(--border)">
+        <th style="text-align:left;padding:.5rem">Datum</th>
+        <th style="text-align:left;padding:.5rem">Titel</th>
+        <th style="text-align:left;padding:.5rem">Location</th>
+        <th style="text-align:left;padding:.5rem">Kategorie</th>
+        <th style="text-align:left;padding:.5rem">Validierung</th>
+        <th style="text-align:left;padding:.5rem">Quelle</th>
+      </tr></thead>
+      <tbody id="demo-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div id="demo-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)closeDemoModal()">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;max-width:600px;width:90%;padding:2rem;position:relative;max-height:80vh;overflow-y:auto">
+    <button onclick="closeDemoModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer">&times;</button>
+    <h2 id="modal-title" style="margin-top:0;color:var(--accent)"></h2>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:.5rem 1rem;margin-top:1rem">
+      <span style="color:var(--text2)">📅 Datum:</span><span id="modal-date"></span>
+      <span style="color:var(--text2)">📍 Location:</span><span id="modal-location"></span>
+      <span style="color:var(--text2)">📋 Status:</span><span id="modal-status"></span>
+      <span style="color:var(--text2)">🔍 Validierung:</span><span id="modal-validation"></span>
+      <span style="color:var(--text2)">🔗 Quelle:</span><span id="modal-source"></span>
+      <span style="color:var(--text2)">📂 Kategorie:</span><span id="modal-category"></span>
+      <span style="color:var(--text2)">📝 Hinweis:</span><span id="modal-note"></span>
+    </div>
+  </div>
+</div>
+
+<style>
+.group-header-row td{padding:.6rem .5rem!important;font-weight:700;font-size:.85rem;letter-spacing:.5px}
+.group-header-future{background:rgba(0,255,136,.1);color:var(--success)}
+.group-header-past{background:rgba(107,114,128,.15);color:var(--text2)}
+.past-event{opacity:.55}
+</style>
+
+<script>
+(function(){
+  let allEvents = [];
+  const tbody = document.getElementById('demo-tbody');
+  const countEl = document.getElementById('demo-count');
+
+  const CATEGORY_ORDER = {demo:0, kundgebung:1, streik:2, info:3, sport:4, kultur:5};
+
+  function badge(status) {
+    const colors = {valid:'#22c55e',pending:'#eab308',invalid:'#ef4444',planned:'#3b82f6',cancelled:'#6b7280',done:'#22c55e'};
+    const c = colors[status] || '#6b7280';
+    return '<span style="background:'+c+'22;color:'+c+';padding:2px 8px;border-radius:4px;font-size:.75rem">'+status+'</span>';
+  }
+
+  function sortAndGroup(events) {
+    const now = new Date();
+    const today = now.toISOString().substring(0,10);
+
+    const past = events.filter(e => (e.event_date||'') < today)
+      .sort((a,b) => CATEGORY_ORDER[(a.category||'').toLowerCase()] - CATEGORY_ORDER[(b.category||'').toLowerCase()]
+                || (a.event_date||'').localeCompare(b.event_date||''));
+    const future = events.filter(e => (e.event_date||'') >= today)
+      .sort((a,b) => CATEGORY_ORDER[(a.category||'').toLowerCase()] - CATEGORY_ORDER[(b.category||'').toLowerCase()]
+                || (a.event_date||'').localeCompare(b.event_date||''));
+
+    return {future, past};
+  }
+
+  function appendGroupHeader(label, cls, count) {
+    const tr = document.createElement('tr');
+    tr.className = 'group-header-row ' + cls;
+    tr.innerHTML = '<td colspan="6" style="padding:.6rem .5rem">' + label + ' (' + count + ')</td>';
+    tbody.appendChild(tr);
+  }
+
+  function appendRow(e, isPast) {
+    const tr = document.createElement('tr');
+    tr.className = isPast ? 'past-event' : '';
+    tr.style.borderBottom = '1px solid var(--border)';
+    tr.style.cursor = 'pointer';
+    tr.onclick = function(){ openDemoModal(e); };
+    tr.innerHTML = '<td style="padding:.4rem">'+(e.event_date||'—')+'</td>'+
+      '<td style="padding:.4rem;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(e.title||'—')+'</td>'+
+      '<td style="padding:.4rem">'+(e.location||'—')+'</td>'+
+      '<td style="padding:.4rem"><span style="background:var(--border);color:var(--text2);padding:2px 8px;border-radius:4px;font-size:.75rem">'+(e.category||'—')+'</span></td>'+
+      '<td style="padding:.4rem">'+badge(e.validation_status)+'</td>'+
+      '<td style="padding:.4rem;font-size:.75rem;color:var(--text2)">'+(e.source||e.source_name||'—')+'</td>';
+    tbody.appendChild(tr);
+  }
+
+  function render(events) {
+    tbody.innerHTML = '';
+    const {future, past} = sortAndGroup(events);
+
+    if (future.length) {
+      appendGroupHeader('🟢 ZUKÜNFTIGE EVENTS', 'group-header-future', future.length);
+      future.forEach(e => appendRow(e, false));
+    }
+    if (past.length) {
+      appendGroupHeader('⏳ VERGANGENE EVENTS', 'group-header-past', past.length);
+      past.forEach(e => appendRow(e, true));
+    }
+    if (!future.length && !past.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:2rem">Keine Events gefunden</td></tr>';
+    }
+    countEl.textContent = events.length + ' Events (' + future.length + ' zukünftig, ' + past.length + ' vergangen)';
+  }
+
+  function applyFilter() {
+    const cat = document.getElementById('filter-category').value;
+    const val = document.getElementById('filter-validation').value;
+    let filtered = allEvents;
+    if (cat) filtered = filtered.filter(e => (e.category||'').toLowerCase() === cat.toLowerCase());
+    if (val) filtered = filtered.filter(e => e.validation_status === val);
+    render(filtered);
+  }
+
+  // Stats update
+  function updateStats(events) {
+    document.getElementById('stat-total').textContent = events.length;
+    const now = new Date();
+    const weekLater = new Date(now.getTime() + 7*24*60*60*1000);
+    const twoWeeksLater = new Date(now.getTime() + 14*24*60*60*1000);
+    const weekCount = events.filter(e => {
+      if (!e.event_date) return false;
+      const d = new Date(e.event_date);
+      return d >= now && d <= weekLater;
+    }).length;
+    const nextWeekCount = events.filter(e => {
+      if (!e.event_date) return false;
+      const d = new Date(e.event_date);
+      return d > weekLater && d <= twoWeeksLater;
+    }).length;
+    document.getElementById('stat-week').textContent = weekCount;
+    document.getElementById('stat-nextweek').textContent = nextWeekCount;
+    const validCount = events.filter(e => e.validation_status === 'valid').length;
+    document.getElementById('stat-valid').textContent = validCount;
+  }
+
+  // Modal
+  window.openDemoModal = function(e) {
+    document.getElementById('modal-title').textContent = e.title || '—';
+    document.getElementById('modal-date').textContent = (e.event_date||'—') + (e.event_time ? ' '+e.event_time : '');
+    document.getElementById('modal-location').textContent = e.location || '—';
+    document.getElementById('modal-status').innerHTML = badge(e.status);
+    document.getElementById('modal-validation').innerHTML = badge(e.validation_status);
+    document.getElementById('modal-source').textContent = e.source || e.source_name || '—';
+    document.getElementById('modal-category').textContent = e.category || '—';
+    document.getElementById('modal-note').textContent = e.validation_note || '—';
+    const modal = document.getElementById('demo-modal');
+    modal.style.display = 'flex';
+  };
+
+  window.closeDemoModal = function() {
+    document.getElementById('demo-modal').style.display = 'none';
+  };
+
+  document.getElementById('filter-category').addEventListener('change', applyFilter);
+  document.getElementById('filter-validation').addEventListener('change', applyFilter);
+
+  fetch('/api/demos/all').then(r=>r.json()).then(data => {
+    allEvents = (data.events||[]).sort((a,b) => (a.event_date||'').localeCompare(b.event_date||''));
+    render(allEvents);
+    updateStats(allEvents);
+  }).catch(err => {
+    countEl.textContent = 'Fehler beim Laden';
+    console.error(err);
+  });
+})();
+</script>
+{% endblock %}

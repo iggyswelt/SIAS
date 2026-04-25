@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAS — Image Tools</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,wght@0,300;0,500;0,700;1,300&display=swap');
+
+  :root {
+    --bg:        #0d0f14;
+    --surface:   #141720;
+    --card:      #1a1e2a;
+    --border:    #252c3f;
+    --accent:    #00e5a0;
+    --accent2:   #7b6cff;
+    --danger:    #ff4b6e;
+    --text:      #e8eaf0;
+    --muted:     #5a6278;
+    --mono:      'Space Mono', monospace;
+    --sans:      'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ───────────────────────────────── */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .header-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(0,229,160,.08);
+    border: 1px solid rgba(0,229,160,.25);
+    padding: 3px 9px;
+    border-radius: 3px;
+  }
+  .header h1 {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: var(--text);
+  }
+  .service-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background .3s;
+  }
+  .dot.ok   { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .dot.err  { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+  /* ── LAYOUT ───────────────────────────────── */
+  .workspace {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 0;
+    height: calc(100vh - 57px);
+  }
+
+  /* ── LEFT PANEL ───────────────────────────── */
+  .panel-left {
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .section {
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  /* ── DROP ZONE ────────────────────────────── */
+  .dropzone {
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+    background: rgba(255,255,255,.015);
+  }
+  .dropzone:hover,
+  .dropzone.drag-over {
+    border-color: var(--accent);
+    background: rgba(0,229,160,.04);
+  }
+  .dropzone input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .dropzone-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+    opacity: .5;
+  }
+  .dropzone-text {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .dropzone-text strong {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ── THUMB PREVIEW ────────────────────────── */
+  .thumb-wrap {
+    margin-top: 14px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    display: none;
+    position: relative;
+    background: repeating-conic-gradient(#1f2330 0% 25%, #171b27 0% 50%) 0 0 / 16px 16px;
+  }
+  .thumb-wrap img {
+    display: block;
+    width: 100%;
+    max-height: 220px;
+    object-fit: contain;
+  }
+  .thumb-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    padding: 7px 10px;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── MODE SELECTOR ────────────────────────── */
+  .mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .mode-btn {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    user-select: none;
+  }
+  .mode-btn:hover { border-color: var(--accent2); }
+  .mode-btn.active {
+    border-color: var(--accent);
+    background: rgba(0,229,160,.07);
+  }
+  .mode-btn .mode-icon { font-size: 20px; margin-bottom: 5px; }
+  .mode-btn .mode-name {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+  }
+  .mode-btn.active .mode-name { color: var(--accent); }
+
+  /* ── ACTION BUTTON ────────────────────────── */
+  .btn-run {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    margin-top: 4px;
+  }
+  .btn-run:hover  { opacity: .88; }
+  .btn-run:active { transform: scale(.98); }
+  .btn-run:disabled {
+    opacity: .3;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ── PROGRESS ─────────────────────────────── */
+  .progress-wrap {
+    display: none;
+    margin-top: 12px;
+  }
+  .progress-bar-bg {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    width: 0%;
+    transition: width .3s;
+    border-radius: 2px;
+  }
+  .progress-bar.indeterminate {
+    width: 40% !important;
+    animation: slide 1.4s ease-in-out infinite;
+  }
+  @keyframes slide {
+    0%   { transform: translateX(-200%); }
+    100% { transform: translateX(350%); }
+  }
+  .progress-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    margin-top: 7px;
+    text-align: center;
+  }
+
+  /* ── LOG ──────────────────────────────────── */
+  .log-box {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 10px 12px;
+    min-height: 54px;
+    max-height: 120px;
+    overflow-y: auto;
+    line-height: 1.8;
+    white-space: pre-wrap;
+  }
+  .log-box .log-ok   { color: var(--accent); }
+  .log-box .log-err  { color: var(--danger); }
+  .log-box .log-info { color: var(--accent2); }
+
+  /* ── RIGHT PANEL ──────────────────────────── */
+  .panel-right {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .result-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+  }
+  .result-header h2 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex: 1;
+  }
+
+  .btn-dl {
+    padding: 8px 18px;
+    background: transparent;
+    border: 1.5px solid var(--accent);
+    color: var(--accent);
+    border-radius: 5px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+    display: none;
+  }
+  .btn-dl:hover {
+    background: var(--accent);
+    color: #000;
+  }
+
+  /* ── BEFORE/AFTER SLIDER ──────────────────── */
+  .comparison-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .placeholder-state {
+    text-align: center;
+    color: var(--muted);
+  }
+  .placeholder-state .big-icon { font-size: 56px; opacity: .18; margin-bottom: 14px; }
+  .placeholder-state p {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .08em;
+    line-height: 1.8;
+  }
+
+  /* Before/After Slider */
+  .slider-container {
+    position: relative;
+    display: none;
+    max-width: 100%;
+    max-height: 100%;
+    user-select: none;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: repeating-conic-gradient(#1f2330 0% 25%, #171b27 0% 50%) 0 0 / 20px 20px;
+    cursor: col-resize;
+  }
+  .slider-container img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(100vh - 200px);
+    object-fit: contain;
+  }
+  .slider-after {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    width: 50%;
+  }
+  .slider-after img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    max-height: none;
+  }
+  /* fix: after img width matches container */
+  .slider-after img { width: auto; min-width: 100%; }
+
+  .slider-divider {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: var(--accent);
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: col-resize;
+    z-index: 10;
+  }
+  .slider-handle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    z-index: 11;
+    box-shadow: 0 2px 12px rgba(0,0,0,.5);
+  }
+
+  .label-before, .label-after {
+    position: absolute;
+    bottom: 12px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    background: rgba(0,0,0,.5);
+    backdrop-filter: blur(4px);
+    z-index: 5;
+  }
+  .label-before { left: 12px; color: var(--muted); }
+  .label-after  { right: 12px; color: var(--accent); }
+
+  /* ── RESULT META ──────────────────────────── */
+  .result-meta {
+    padding: 12px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 24px;
+    background: var(--surface);
+    display: none;
+  }
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .meta-key {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .meta-val {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-tag">SIAS</span>
+  <h1>IMAGE TOOLS</h1>
+  <div class="service-status">
+    <div class="dot" id="svc-dot"></div>
+    <span id="svc-label">checking...</span>
+  </div>
+</div>
+
+<div class="workspace">
+
+  <!-- LEFT: Controls -->
+  <div class="panel-left">
+
+    <!-- Upload -->
+    <div class="section">
+      <div class="section-label">01 — Upload</div>
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="file-input" accept="image/*">
+        <div class="dropzone-icon">⬆</div>
+        <div class="dropzone-text">
+          <strong>Datei hierher ziehen</strong><br>
+          oder klicken zum auswählen<br>
+          JPG · PNG · WEBP · max 30 MB
+        </div>
+      </div>
+      <div class="thumb-wrap" id="thumb-wrap">
+        <img id="thumb-img" src="" alt="Preview">
+        <div class="thumb-meta" id="thumb-meta"></div>
+      </div>
+    </div>
+
+    <!-- Mode -->
+    <div class="section">
+      <div class="section-label">02 — Modus</div>
+      <div class="mode-grid">
+        <div class="mode-btn active" data-mode="remove-bg">
+          <div class="mode-icon">✂️</div>
+          <span class="mode-name">BG Remove</span>
+        </div>
+        <div class="mode-btn" data-mode="upscale">
+          <div class="mode-icon">🔍</div>
+          <span class="mode-name">4× Upscale</span>
+        </div>
+        <div class="mode-btn" data-mode="remove-bg-upscale">
+          <div class="mode-icon">⚡</div>
+          <span class="mode-name">BG + 4×</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Run -->
+    <div class="section">
+      <div class="section-label">03 — Ausführen</div>
+      <button class="btn-run" id="btn-run" disabled>Verarbeiten</button>
+      <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-bar-bg">
+          <div class="progress-bar indeterminate" id="progress-bar"></div>
+        </div>
+        <div class="progress-label" id="progress-label">Verarbeite...</div>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div class="section">
+      <div class="section-label">Log</div>
+      <div class="log-box" id="log-box">Bereit. Datei hochladen und Modus wählen.</div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Result -->
+  <div class="panel-right">
+    <div class="result-header">
+      <h2>Vorher / Nachher</h2>
+      <button class="btn-dl" id="btn-dl" onclick="downloadResult()">⬇ PNG Download</button>
+    </div>
+
+    <div class="comparison-area" id="comparison-area">
+      <div class="placeholder-state" id="placeholder">
+        <div class="big-icon">🖼</div>
+        <p>Hier erscheint das Ergebnis.<br>Datei hochladen und auf Verarbeiten klicken.</p>
+      </div>
+
+      <div class="slider-container" id="slider-container">
+        <img id="img-before" src="" alt="Before">
+        <div class="slider-after" id="slider-after">
+          <img id="img-after" src="" alt="After">
+        </div>
+        <div class="slider-divider" id="slider-divider">
+          <div class="slider-handle">↔</div>
+        </div>
+        <div class="label-before">VORHER</div>
+        <div class="label-after">NACHHER</div>
+      </div>
+    </div>
+
+    <div class="result-meta" id="result-meta">
+      <div class="meta-item">
+        <span class="meta-key">Eingabe</span>
+        <span class="meta-val" id="meta-in">—</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-key">Ausgabe</span>
+        <span class="meta-val" id="meta-out">—</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-key">Auflösung</span>
+        <span class="meta-val" id="meta-res">—</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-key">Modus</span>
+        <span class="meta-val" id="meta-mode">—</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-key">Zeit</span>
+        <span class="meta-val" id="meta-time">—</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = 'http://127.0.0.1:5050';
+
+let currentFile  = null;
+let currentMode  = 'remove-bg';
+let resultBlob   = null;
+let resultUrl    = null;
+
+// ── Service Health Check ──────────────────────
+async function checkHealth() {
+  try {
+    const r = await fetch(`${API}/health`, { signal: AbortSignal.timeout(3000) });
+    const d = await r.json();
+    if (d.ok) {
+      document.getElementById('svc-dot').className = 'dot ok';
+      document.getElementById('svc-label').textContent = 'Service online :5050';
+    } else throw new Error();
+  } catch {
+    document.getElementById('svc-dot').className = 'dot err';
+    document.getElementById('svc-label').textContent = 'Service offline — python3 rembg_service.py';
+  }
+}
+checkHealth();
+setInterval(checkHealth, 15000);
+
+// ── Log ───────────────────────────────────────
+function log(msg, type='') {
+  const box = document.getElementById('log-box');
+  const ts  = new Date().toLocaleTimeString('de-DE');
+  const line = document.createElement('div');
+  if (type) line.className = `log-${type}`;
+  line.textContent = `[${ts}] ${msg}`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ── Drag & Drop ───────────────────────────────
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('file-input');
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', ()=> dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) loadFile(f);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) loadFile(fileInput.files[0]);
+});
+
+function loadFile(f) {
+  currentFile = f;
+  resultBlob  = null;
+  resultUrl   = null;
+  document.getElementById('btn-run').disabled = false;
+  document.getElementById('btn-dl').style.display = 'none';
+
+  // Thumb
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wrap = document.getElementById('thumb-wrap');
+    const img  = document.getElementById('thumb-img');
+    img.src = e.target.result;
+    wrap.style.display = 'block';
+    document.getElementById('thumb-meta').textContent =
+      `${f.name} · ${(f.size/1024).toFixed(0)} KB · ${f.type}`;
+  };
+  reader.readAsDataURL(f);
+
+  // Reset result area
+  document.getElementById('slider-container').style.display = 'none';
+  document.getElementById('placeholder').style.display = 'block';
+  document.getElementById('result-meta').style.display  = 'none';
+  document.getElementById('meta-in').textContent = `${(f.size/1024).toFixed(0)} KB`;
+
+  log(`Datei geladen: ${f.name} (${(f.size/1024).toFixed(0)} KB)`);
+}
+
+// ── Mode Selector ─────────────────────────────
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+    log(`Modus: ${currentMode}`);
+  });
+});
+
+// ── Run ───────────────────────────────────────
+document.getElementById('btn-run').addEventListener('click', async () => {
+  if (!currentFile) return;
+
+  const btnRun = document.getElementById('btn-run');
+  const prog   = document.getElementById('progress-wrap');
+  const pLabel = document.getElementById('progress-label');
+
+  btnRun.disabled = true;
+  prog.style.display = 'block';
+  pLabel.textContent = 'Verbinde mit Service...';
+  log(`Starte: ${currentMode}`, 'info');
+
+  const modeLabels = {
+    'remove-bg':          'BG Remove',
+    'upscale':            '4× Upscale',
+    'remove-bg-upscale':  'BG Remove + 4× Upscale'
+  };
+
+  const t0 = Date.now();
+  const fd  = new FormData();
+  fd.append('file', currentFile);
+
+  try {
+    pLabel.textContent = 'Verarbeite (u2net läuft lokal)...';
+    const resp = await fetch(`${API}/${currentMode}`, { method: 'POST', body: fd });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: resp.statusText }));
+      throw new Error(err.error || resp.statusText);
+    }
+
+    resultBlob = await resp.blob();
+    resultUrl  = URL.createObjectURL(resultBlob);
+    const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+
+    pLabel.textContent = `✓ Fertig in ${elapsed}s`;
+    log(`Fertig in ${elapsed}s — ${(resultBlob.size/1024).toFixed(0)} KB`, 'ok');
+
+    showResult(resultUrl, elapsed, modeLabels[currentMode]);
+  } catch(e) {
+    log(`Fehler: ${e.message}`, 'err');
+    pLabel.textContent = `Fehler: ${e.message}`;
+  } finally {
+    btnRun.disabled = false;
+    setTimeout(() => { prog.style.display = 'none'; }, 3000);
+  }
+});
+
+// ── Show Result with Slider ───────────────────
+function showResult(url, elapsed, modeLabel) {
+  const placeholder = document.getElementById('placeholder');
+  const slider      = document.getElementById('slider-container');
+  const imgBefore   = document.getElementById('img-before');
+  const imgAfter    = document.getElementById('img-after');
+
+  // Set images
+  const beforeUrl = URL.createObjectURL(currentFile);
+  imgBefore.src = beforeUrl;
+  imgAfter.src  = url;
+
+  // Wait for images to load then measure
+  imgBefore.onload = () => {
+    document.getElementById('meta-res').textContent =
+      `${imgBefore.naturalWidth} × ${imgBefore.naturalHeight} → see output`;
+  };
+
+  placeholder.style.display = 'none';
+  slider.style.display       = 'block';
+
+  // Meta bar
+  const meta = document.getElementById('result-meta');
+  meta.style.display = 'flex';
+  document.getElementById('meta-out').textContent  = `${(resultBlob.size/1024).toFixed(0)} KB`;
+  document.getElementById('meta-mode').textContent  = modeLabel;
+  document.getElementById('meta-time').textContent  = `${elapsed}s`;
+
+  // Download button
+  document.getElementById('btn-dl').style.display = 'inline-block';
+
+  // Init slider at 50%
+  initSlider();
+}
+
+// ── Before/After Slider Logic ─────────────────
+function initSlider() {
+  const container = document.getElementById('slider-container');
+  const after     = document.getElementById('slider-after');
+  const divider   = document.getElementById('slider-divider');
+
+  let dragging = false;
+
+  function setPosition(x) {
+    const rect = container.getBoundingClientRect();
+    const pct  = Math.min(Math.max((x - rect.left) / rect.width, 0.02), 0.98);
+    after.style.width     = (pct * 100) + '%';
+    divider.style.left    = (pct * 100) + '%';
+  }
+
+  container.addEventListener('mousedown',  e => { dragging = true; setPosition(e.clientX); });
+  container.addEventListener('touchstart', e => { dragging = true; setPosition(e.touches[0].clientX); }, {passive:true});
+  window.addEventListener('mousemove',  e => { if (dragging) setPosition(e.clientX); });
+  window.addEventListener('touchmove',  e => { if (dragging) setPosition(e.touches[0].clientX); }, {passive:true});
+  window.addEventListener('mouseup',   () => dragging = false);
+  window.addEventListener('touchend',  () => dragging = false);
+}
+
+// ── Download ──────────────────────────────────
+function downloadResult() {
+  if (!resultUrl) return;
+  const a = document.createElement('a');
+  const modeNames = {
+    'remove-bg':         'no-bg',
+    'upscale':           'upscaled-4x',
+    'remove-bg-upscale': 'no-bg-4x'
+  };
+  const base = currentFile.name.replace(/\.[^.]+$/, '');
+  a.href     = resultUrl;
+  a.download = `${base}_${modeNames[currentMode]}.png`;
+  a.click();
+  log(`Download: ${a.download}`, 'ok');
+}
+</script>
+</body>
+</html>

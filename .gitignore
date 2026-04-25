@@ -6,3 +6,26 @@ agent_configs/
 *.secrets
 adm/
 backups/
+
+# Clear Sky — Security
+.secrets/
+*.key
+*.pem
+smtp_config.py
+*client_secrets*
+*.env
+osr/
+pdfs/
+data/
+backups/
+*.log
+rheingold/logs/
+__pycache__/
+*.pyc
+app.py.bak.*
+
+# Backup files
+*.bak*
+**/__pycache__/
+*.pyc
+vault/

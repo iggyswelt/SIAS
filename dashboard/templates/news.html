@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}News Monitor{% endblock %}
+{% block content %}
+
+<style>
+.feed-item { padding:10px 0; border-bottom:1px solid #222; }
+.feed-item a { color:#e0e0e0; text-decoration:none; font-size:14px; }
+.feed-item a:hover { color:#00d9ff; }
+.feed-item .meta { color:#666; font-size:11px; margin-top:4px; }
+.src-btn { border-radius:4px; }
+.src-btn.active { box-shadow:0 0 0 2px #00d9ff; }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+.feed-container { background:#111827; border:1px solid #333; border-radius:8px; padding:12px; }
+</style>
+
+<h1 style="color:#00d9ff;margin-bottom:20px;">📰 News Monitor</h1>
+
+<div style="display:flex;gap:8px;margin-bottom:20px;">
+  <button class="news-tab active" onclick="showTab('politik')" style="padding:8px 16px;background:#1a1a2e;color:#00d9ff;border:1px solid #333;cursor:pointer;">Politik</button>
+  <button class="news-tab" onclick="showTab('gaming')" style="padding:8px 16px;background:#1a1a2e;color:#888;border:1px solid #333;cursor:pointer;">Gaming</button>
+</div>
+
+<!-- POLITIK TAB -->
+<div id="tab-politik" class="tab-content active">
+  <div style="display:flex;gap:16px;">
+    <!-- Links: politik_a Quellen -->
+    <div style="flex:1;">
+      <div style="margin-bottom:8px;">
+        <button class="src-btn active" onclick="loadFeed(this,'tichy')" style="padding:4px 10px;background:#0066cc;color:#fff;border:none;cursor:pointer;font-size:12px;margin-right:4px;">Tichy</button>
+        <button class="src-btn" onclick="loadFeed(this,'jf')" style="padding:4px 10px;background:#1a1a2e;color:#888;border:1px solid #333;cursor:pointer;font-size:12px;margin-right:4px;">JF</button>
+        <button class="src-btn" onclick="loadFeed(this,'blackout')" style="padding:4px 10px;background:#1a1a2e;color:#888;border:1px solid #333;cursor:pointer;font-size:12px;">Blackout</button>
+      </div>
+      <div id="feed-politik" class="feed-container" style="max-height:600px;overflow-y:auto;"></div>
+    </div>
+    <!-- Rechts: NIUS -->
+    <div style="flex:1;">
+      <div style="margin-bottom:8px;">
+        <button class="src-btn active" onclick="loadFeed(this,'nius')" style="padding:4px 10px;background:#e63946;color:#fff;border:none;cursor:pointer;font-size:12px;">NIUS</button>
+      </div>
+      <div id="feed-nius" class="feed-container" style="max-height:600px;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- GAMING TAB -->
+<div id="tab-gaming" class="tab-content">
+  <div style="margin-bottom:8px;">
+    <button class="src-btn active" onclick="loadGaming(this,'tpp')" style="padding:4px 10px;background:#6b21a8;color:#fff;border:none;cursor:pointer;font-size:12px;margin-right:4px;">That Park Place</button>
+    <button class="src-btn" onclick="loadGaming(this,'kia')" style="padding:4px 10px;background:#1a1a2e;color:#888;border:1px solid #333;cursor:pointer;font-size:12px;margin-right:4px;">KIA</button>
+    <button class="src-btn" onclick="loadGaming(this,'ign')" style="padding:4px 10px;background:#1a1a2e;color:#888;border:1px solid #333;cursor:pointer;font-size:12px;margin-right:4px;">IGN</button>
+    <button class="src-btn" onclick="loadGaming(this,'fandom')" style="padding:4px 10px;background:#1a1a2e;color:#888;border:1px solid #333;cursor:pointer;font-size:12px;">Fandom</button>
+  </div>
+  <div id="feed-gaming" class="feed-container" style="max-height:600px;overflow-y:auto;"></div>
+</div>
+
+<script>
+const feedCache = {};
+
+async function loadFeed(btn, source) {
+  btn.closest('div').querySelectorAll('.src-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  var elId = source === 'nius' ? 'feed-nius' : 'feed-politik';
+  var el = document.getElementById(elId);
+  var cacheKey = 'politik_' + source;
+
+  if (feedCache[cacheKey]) {
+    renderFeed(el, feedCache[cacheKey]);
+    return;
+  }
+
+  el.innerHTML = '<div style="color:#666;padding:20px;">Lade...</div>';
+
+  try {
+    var resp = await fetch('/api/news/fetch?source=' + source);
+    if (!resp.ok) throw new Error(resp.statusText);
+    var data = await resp.json();
+    feedCache[cacheKey] = data;
+    renderFeed(el, data);
+  } catch(e) {
+    el.innerHTML = '<div style="color:#f55;padding:20px;">Fehler: ' + e.message + '</div>';
+  }
+}
+
+function renderFeed(el, items) {
+  if (!items || !items.length) {
+    el.innerHTML = '<div style="color:#666;padding:20px;">Keine Artikel</div>';
+    return;
+  }
+  el.innerHTML = items.slice(0, 25).map(function(item) {
+    return '<div class="feed-item"><a href="' + item.url + '" target="_blank" rel="noopener">' + item.title + '</a><div class="meta">' + (item.source || '') + ' · ' + (item.published || '') + '</div></div>';
+  }).join('');
+}
+
+async function loadGaming(btn, source) {
+  btn.closest('div').querySelectorAll('.src-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  var el = document.getElementById('feed-gaming');
+  var cacheKey = 'gaming_' + source;
+
+  if (feedCache[cacheKey]) {
+    renderFeed(el, feedCache[cacheKey]);
+    return;
+  }
+
+  el.innerHTML = '<div style="color:#666;padding:20px;">Lade...</div>';
+
+  try {
+    var resp = await fetch('/api/news/fetch?source=' + source);
+    var data = await resp.json();
+    feedCache[cacheKey] = data;
+    renderFeed(el, data);
+  } catch(e) {
+    el.innerHTML = '<div style="color:#f55;padding:20px;">Fehler: ' + e.message + '</div>';
+  }
+}
+
+function showTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.news-tab').forEach(function(t){ t.classList.remove('active'); t.style.color='#888'; });
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.target.classList.add('active');
+  event.target.style.color='#00d9ff';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadFeed(document.querySelector('#tab-politik .src-btn.active'), 'tichy');
+  loadFeed(document.querySelector('#tab-politik .src-btn[onclick*="nius"]'), 'nius');
+  loadGaming(document.querySelector('#tab-gaming .src-btn.active'), 'tpp');
+});
+</script>
+
+{% endblock %}

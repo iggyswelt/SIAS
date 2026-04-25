@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>📊 Dashboard</h1>
+
+<!-- Row 1: Token Usage -->
+<div class="grid">
+  <div class="card"><h3>🔑 Token Usage — Heute</h3><div class="stat-value" id="token_today">—</div><div class="stat-label">API Calls heute</div></div>
+  <div class="card"><h3>📅 Token Usage — Woche</h3><div class="stat-value" id="token_week">—</div><div class="stat-label">API Calls diese Woche</div></div>
+  <div class="card"><h3>Σ Token Usage — Gesamt</h3><div class="stat-value" id="token_total">—</div><div class="stat-label">API Calls gesamt</div></div>
+  <div class="card"><h3>💾 Disk Free</h3><div class="stat-value" id="disk-free">—</div><div class="stat-label">Verfügbarer Speicher</div></div>
+</div>
+
+<!-- Row 2: System Health + Agent Stats -->
+<div class="grid" style="margin-top:16px">
+  <div class="card"><h3>🩺 System Health</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+      <div><span class="health-dot" id="health-postgres"></span> PostgreSQL</div>
+      <div><span class="health-dot" id="health-redis"></span> Redis</div>
+      <div><span class="health-dot" id="health-gateway"></span> OpenClaw Gateway</div>
+      <div style="margin-top:8px;font-size:0.9em;color:#aaa" id="system-info">Lade...</div>
+    </div>
+  </div>
+  <div class="card"><h3>🤖 Agent Stats (Top 3)</h3>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px" id="agent-stats">
+      <div style="color:#aaa">Lade...</div>
+    </div>
+  </div>
+  <div class="card"><h3>📡 OpenClaw Gateway</h3>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px" id="oc-stats">
+      <div style="color:#aaa">Lade...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Row 3: Kurse / Prices -->
+<div class="grid" style="margin-top:16px">
+  <div class="card"><h3>₿ BTC</h3><div class="stat-value" id="price-btc">—</div><div class="stat-label" id="price-btc-24h"></div></div>
+  <div class="card"><h3>◎ SOL</h3><div class="stat-value" id="price-sol">—</div><div class="stat-label" id="price-sol-24h"></div></div>
+  <div class="card"><h3>🥇 Gold</h3><div class="stat-value" id="price-gold">—</div><div class="stat-label" id="price-gold-24h"></div></div>
+  <div class="card"><h3>🥈 Silber</h3><div class="stat-value" id="price-silver">—</div><div class="stat-label" id="price-silver-24h"></div></div>
+  <div class="card"><h3>📈 DAX</h3><div class="stat-value" id="price-dax">—</div><div class="stat-label" id="price-dax-label"></div></div>
+  <div class="card"><h3>📉 S&P 500</h3><div class="stat-value" id="price-sp500">—</div><div class="stat-label" id="price-sp500-label"></div></div>
+</div>
+
+<!-- Row 4: DB Stats -->
+<div class="grid" style="margin-top:16px">
+  <div class="card"><h3>🗄️ DB / Demos</h3>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px" id="db-stats">
+      <div style="color:#aaa">Lade...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Existing stats loader
+function fmtToken(val, label) {
+  const n = parseInt(val) || 0;
+  if (n > 0) return n.toLocaleString('de-DE');
+  return '<span style="font-size:.65em;color:var(--text2)">Keine Daten seit 12.03.</span>';
+}
+fetch('/api/dashboard-stats').then(r=>r.json()).then(d=>{
+  document.getElementById('token_today').innerHTML=fmtToken(d.tokens_real_today||d.token_today,'heute');
+  document.getElementById('token_week').innerHTML=fmtToken(d.token_week,'woche');
+  const total = parseInt(d.tokens_real_total||d.token_total)||0;
+  document.getElementById('token_total').textContent = total > 0 ? total.toLocaleString('de-DE') : '—';
+  document.getElementById('disk-free').textContent=d.disk_free_gb?d.disk_free_gb+' / '+d.disk_total_gb+' GB':'—';
+  document.getElementById('health-postgres').className='health-dot '+(d.postgres==='up'?'health-up':'health-down');
+  document.getElementById('health-redis').className='health-dot '+(d.redis==='up'?'health-up':'health-down');
+  document.getElementById('health-gateway').className='health-dot '+(d.gateway==='up'?'health-up':'health-down');
+}).catch(()=>{});
+
+// System stats
+fetch('/api/stats/system').then(r=>r.json()).then(d=>{
+  if(d.error) return;
+  document.getElementById('system-info').innerHTML=
+    '⏱ Uptime: '+d.uptime+'<br>_CPU: '+d.cpu+'% &nbsp; RAM: '+d.ram+' &nbsp; Disk: '+d.disk+'%';
+}).catch(()=>{});
+
+// Agent stats
+fetch('/api/stats/agents').then(r=>r.json()).then(d=>{
+  if(d.error) return;
+  const el=document.getElementById('agent-stats');
+  if(Array.isArray(d) && d.length){
+    el.innerHTML=d.map(a=>
+      '<div><span class="health-dot health-up"></span> '+a.agent_id+
+      ' — <b>'+a.task_count+'</b> Tasks'+(a.tokens?' / '+a.tokens+' tokens':'')+'</div>'
+    ).join('');
+  } else {
+    el.innerHTML='<div style="color:#aaa">Keine Agent-Daten</div>';
+  }
+}).catch(()=>{});
+
+// OpenClaw stats
+fetch('/api/openclaw/stats').then(r=>r.json()).then(d=>{
+  const el=document.getElementById('oc-stats');
+  el.innerHTML=
+    '<div>Sessions: <b>'+(d.sessions||0)+'</b></div>'+
+    '<div>Messages: <b>'+(d.messages||0)+'</b></div>'+
+    '<div>Tokens: <b>'+(d.tokens||0)+'</b></div>'+
+    '<div style="font-size:0.8em;color:#666">'+d.timestamp+'</div>';
+}).catch(()=>{});
+
+// Prices
+fetch('/api/prices').then(r=>r.json()).then(d=>{
+  if(d.error) return;
+  document.getElementById('price-btc').textContent=d.btc||'N/A';
+  document.getElementById('price-sol').textContent=d.sol||'N/A';
+  document.getElementById('price-gold').textContent=d.gold||'N/A';
+  document.getElementById('price-silver').textContent=d.silver||'N/A';
+  document.getElementById('price-dax').textContent=d.dax||'N/A';
+  document.getElementById('price-sp500').textContent=d.sp500||'N/A';
+  // 24h changes
+  const fmt=(v)=>v>0?'<span style="color:#4caf50">▲'+v+'%</span>':'<span style="color:#f44336">▼'+Math.abs(v)+'%</span>';
+  if(d.btc_24h) document.getElementById('price-btc-24h').innerHTML='24h: '+fmt(d.btc_24h);
+  if(d.sol_24h) document.getElementById('price-sol-24h').innerHTML='24h: '+fmt(d.sol_24h);
+  if(d.gold_24h) document.getElementById('price-gold-24h').innerHTML='24h: '+fmt(d.gold_24h);
+  if(d.silver_24h) document.getElementById('price-silver-24h').innerHTML='24h: '+fmt(d.silver_24h);
+}).catch(()=>{});
+
+// DB stats
+fetch('/api/stats/dashboard').then(r=>r.json()).then(d=>{
+  const el=document.getElementById('db-stats');
+  if(d.error){ el.innerHTML='<div style="color:#f44336">'+d.error+'</div>'; return; }
+  el.innerHTML=
+    '<div>Demos: <b>'+(d.demos?.total||0)+'</b> ('+(d.demos?.size||'?')+') </div>'+
+    '<div>News (24h): <b>'+(d.news?.today||0)+'</b></div>'+
+    '<div style="font-size:0.8em;color:#4caf50">'+d.status+'</div>';
+}).catch(()=>{});
+</script>
+{% endblock %}

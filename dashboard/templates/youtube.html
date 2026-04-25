@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>▶️ YouTube — @IggysWelt</h1>
+
+<div style="display:flex;gap:.5rem;margin-bottom:1rem">
+  <button class="yt-tab active" data-tab="videos" onclick="switchTab('videos')">📹 Videos</button>
+  <button class="yt-tab" data-tab="community" onclick="switchTab('community')">👥 Community Top100</button>
+  <button class="yt-tab" data-tab="comments" onclick="switchTab('comments')">💬 Kommentare</button>
+</div>
+
+<style>
+.yt-tab{background:var(--card);border:1px solid var(--border);color:var(--text);padding:.5rem 1rem;border-radius:6px;cursor:pointer;font-size:.9rem}
+.yt-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.yt-panel{display:none}.yt-panel.active{display:block}
+.yt-subtab{background:transparent;border:1px solid var(--border);color:var(--text2);padding:.3rem .8rem;border-radius:4px;cursor:pointer;font-size:.8rem;margin-right:.5rem}
+.yt-subtab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.reply-dropdown{position:absolute;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.8rem;z-index:100;min-width:280px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.reply-dropdown .suggestion-btn{display:block;width:100%;text-align:left;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.5rem .8rem;border-radius:4px;cursor:pointer;margin-bottom:.4rem;font-size:.85rem}
+.reply-dropdown .suggestion-btn:hover{background:var(--accent);color:#fff}
+.reply-sent{color:var(--success);font-size:.8rem;font-style:italic}
+</style>
+
+<!-- VIDEOS TAB -->
+<div class="yt-panel active" id="panel-videos">
+<div class="grid">
+  <div class="card"><h3>📹 Gesamte Videos</h3><div class="stat-value">1.419</div><div class="stat-label">Veröffentlicht auf YouTube</div></div>
+  <div class="card"><h3>🔄 Hestia Pipeline</h3><div class="stat-value" style="color:var(--success)">Active</div><div class="stat-label">Transkription & Knowledge-Base</div></div>
+</div>
+<div class="card" style="margin-top:16px">
+<h3>📝 Letzte Videos (Knowledge Base)</h3>
+<table>
+<tr><th>#</th><th>Titel / Key</th><th>Details</th><th style="text-align:center">📌</th></tr>
+{% for v in videos %}
+{% set video_key = v[0] %}
+{% set video_id = video_key.replace('iggy_video_', '') %}
+<tr><td>{{loop.index}}</td><td>{{v[0]}}</td><td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{v[1][:120]}}</td><td style="text-align:center"><button class="btn" style="padding:2px 8px;font-size:.85rem;margin-right:4px" data-video-id="{{v[0]}}" data-title="{{v[1][:120]|e}}" data-duration="{{v[2] if v|length > 2 else 300}}" data-desc="{{v[3][:200]|e if v|length > 3 else ''}}" onclick="hestiaComment(this)">📝</button><button class="btn pin-btn" style="padding:2px 8px;font-size:.85rem" data-video-id="{{video_id}}" data-title="{{v[1][:80]|e}}" onclick="pinComment(this)">📌</button></td></tr>
+{% endfor %}
+{% if not videos %}<tr><td colspan="4" style="text-align:center;color:var(--text2)">Keine Videos in Knowledge Base</td></tr>{% endif %}
+</table>
+</div>
+</div>
+
+<!-- COMMUNITY TAB -->
+<div class="yt-panel" id="panel-community">
+<div style="display:flex;gap:.5rem;margin-bottom:1rem">
+  <button class="yt-subtab active" data-sub="comments" onclick="switchSubTab('comments')">💬 Top Kommentatoren</button>
+  <button class="yt-subtab" data-sub="loyalty" onclick="switchSubTab('loyalty')">🏆 Loyalität</button>
+</div>
+
+<div class="card" style="padding:1rem">
+  <div style="overflow-x:auto">
+    <table id="community-table" style="width:100%;border-collapse:collapse;font-size:.85rem">
+      <thead><tr style="border-bottom:2px solid var(--border)">
+        <th style="text-align:left;padding:.5rem">#</th>
+        <th style="text-align:left;padding:.5rem">Username</th>
+        <th style="text-align:left;padding:.5rem">Kommentare</th>
+        <th style="text-align:left;padding:.5rem">Videos</th>
+        <th style="text-align:left;padding:.5rem">Likes erhalten</th>
+        <th style="text-align:left;padding:.5rem">Letzter Besuch</th>
+        <th style="text-align:left;padding:.5rem">Badge</th>
+      </tr></thead>
+      <tbody id="community-tbody"><tr><td colspan="7" style="text-align:center;color:var(--text2);padding:2rem">Klicke auf einen Subtab um Daten zu laden</td></tr></tbody>
+    </table>
+  </div>
+  <div id="community-count" style="margin-top:.5rem;color:var(--text2);font-size:.8rem"></div>
+</div>
+</div>
+
+<!-- KOMMENTARE TAB -->
+<div class="yt-panel" id="panel-comments">
+<div class="card" style="padding:1rem">
+  <div style="display:flex;gap:.5rem;margin-bottom:1rem">
+    <button class="yt-subtab active" data-csub="recent" onclick="switchCommentSub('recent')">🕐 Aktuell</button>
+    <button class="yt-subtab" data-csub="vip" onclick="switchCommentSub('vip')">⭐ VIP (Action Needed)</button>
+  </div>
+  <div id="comments-stats" style="display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap"></div>
+  <div style="overflow-x:auto">
+    <table id="comments-table" style="width:100%;border-collapse:collapse;font-size:.85rem">
+      <thead><tr style="border-bottom:2px solid var(--border)">
+        <th style="text-align:left;padding:.5rem">#</th>
+        <th style="text-align:left;padding:.5rem">Video</th>
+        <th style="text-align:left;padding:.5rem">Kommentar</th>
+        <th style="text-align:left;padding:.5rem">Autor</th>
+        <th style="text-align:left;padding:.5rem">Datum</th>
+        <th style="text-align:left;padding:.5rem">Status</th>
+        <th style="text-align:center;padding:.5rem">Aktion</th>
+      </tr></thead>
+      <tbody id="comments-tbody"><tr><td colspan="7" style="text-align:center;color:var(--text2);padding:2rem">Laden...</td></tr></tbody>
+    </table>
+  </div>
+  <div id="comments-count" style="margin-top:.5rem;color:var(--text2);font-size:.8rem"></div>
+</div>
+</div>
+
+<!-- Reply Dropdown (floating, positioned by JS) -->
+<div id="reply-dropdown" class="reply-dropdown" style="display:none">
+  <div style="font-weight:600;margin-bottom:.5rem;font-size:.85rem">💬 Antwort-Vorschläge</div>
+  <div id="reply-suggestions"></div>
+  <div style="margin-top:.5rem;display:flex;gap:.5rem">
+    <input type="text" id="reply-custom-input" placeholder="Eigene Antwort..." style="flex:1;padding:.4rem;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:4px;font-size:.85rem">
+    <button onclick="sendCustomReply()" style="background:var(--success);color:#fff;border:none;padding:.4rem .8rem;border-radius:4px;cursor:pointer;font-size:.85rem">Senden</button>
+  </div>
+  <button onclick="closeReplyDropdown()" style="background:none;border:none;color:var(--text2);margin-top:.3rem;cursor:pointer;font-size:.8rem;width:100%;text-align:right">✕ Schließen</button>
+</div>
+
+<script>
+// === HESTIA COMMENT GENERATOR ===
+function hestiaComment(btn) {
+  const videoId = btn.dataset.videoId;
+  const title = btn.dataset.title;
+  const duration = parseInt(btn.dataset.duration) || 0;
+  const desc = btn.dataset.desc || '';
+  if (duration < 240) { alert('⏭️ Short/Video unter 4 Min — übersprungen'); return; }
+  btn.disabled = true; btn.textContent = '⏳';
+  fetch('/api/hestia/write-comment', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({video_id: videoId, title: title, duration_seconds: duration, description: desc})
+  }).then(r => r.json()).then(data => {
+    btn.disabled = false; btn.textContent = '📝';
+    if (data.status === 'skipped') { alert('⏭️ ' + data.message); return; }
+    const comment = data.comment || '';
+    _hestiaPopup(videoId, title, comment);
+  }).catch(e => { btn.disabled = false; btn.textContent = '📝'; alert('Fehler: ' + e); });
+}
+
+function _hestiaPopup(videoId, title, comment) {
+  let overlay = document.getElementById('hestia-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div'); overlay.id = 'hestia-overlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center';
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `<div style="background:var(--card,#1e1e2e);border:2px solid var(--accent,#f59e0b);border-radius:12px;padding:1.5rem;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;color:var(--text,#e0e0e0)">
+    <h3 style="margin:0 0 .5rem;color:var(--accent,#f59e0b)">📝 Hestia Kommentar</h3>
+    <div style="font-size:.85rem;color:var(--text2,#888);margin-bottom:.8rem">${title}</div>
+    <textarea id="hestia-comment-text" style="width:100%;height:180px;background:var(--bg,#111);color:var(--text,#e0e0e0);border:1px solid var(--border,#333);border-radius:8px;padding:.8rem;font-size:.9rem;resize:vertical">${comment}</textarea>
+    <div style="display:flex;gap:.5rem;margin-top:.8rem;flex-wrap:wrap">
+      <button onclick="navigator.clipboard.writeText(document.getElementById('hestia-comment-text').value);this.textContent='✅ Kopiert!'" style="padding:.5rem 1rem;background:var(--accent,#f59e0b);color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:600">📋 Kopieren</button>
+      <button onclick="fetch('/api/hestia/mark-posted/${videoId}',{method:'POST'}).then(r=>r.json()).then(d=>{if(d.status==='success')this.textContent='✅ Gepostet!'})" style="padding:.5rem 1rem;background:#22c55e;color:#fff;border:none;border-radius:6px;cursor:pointer">✓ Als gepostet markieren</button>
+      <button onclick="document.getElementById('hestia-overlay').remove()" style="padding:.5rem 1rem;background:#666;color:#fff;border:none;border-radius:6px;cursor:pointer">Schließen</button>
+    </div></div>`;
+}
+
+// === PIN COMMENT SYSTEM ===
+function pinComment(btn) {
+  const videoId = btn.dataset.videoId;
+  const title = btn.dataset.title || videoId;
+  btn.disabled = true;
+  btn.textContent = '⏳';
+
+  fetch('/api/hestia/pin-comment', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({video_id: videoId, title: title})
+  })
+  .then(r => r.json().then(data => ({status: r.status, body: data})))
+  .then(({status, body}) => {
+    if (status === 401) {
+      btn.textContent = '⚠️';
+      btn.title = 'Token fehlt — /home/iggy/sias-youtube/get_youtube_token.py ausführen';
+      btn.style.background = '#eab30822';
+      alert('⚠️ YouTube OAuth Token fehlt!\n\nToken generieren:\ncd /home/iggy/sias-youtube && python3 get_youtube_token.py');
+    } else if (body.status === 'success') {
+      btn.textContent = '✅';
+      btn.title = 'Gepostet! Pinnen in YouTube Studio.';
+      btn.style.background = '#22c55e22';
+    } else {
+      btn.textContent = '❌';
+      btn.title = body.message || 'Fehler';
+      btn.style.background = '#ef444422';
+      alert('Fehler: ' + (body.message || 'Unbekannt'));
+    }
+  })
+  .catch(err => {
+    btn.textContent = '❌';
+    btn.title = err.message;
+    alert('Fehler: ' + err.message);
+  });
+}
+
+let activeReplyCommentId = null;
+
+function switchTab(tab) {
+  document.querySelectorAll('.yt-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.yt-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+  if (tab === 'community') switchSubTab('comments');
+  if (tab === 'comments') switchCommentSub('recent');
+}
+
+function switchSubTab(sub) {
+  document.querySelectorAll('.yt-subtab[data-sub]').forEach(b => b.classList.toggle('active', b.dataset.sub === sub));
+  const url = sub === 'comments' ? '/api/youtube/community/top100/comments' : '/api/youtube/community/top100/loyalty';
+  const tbody = document.getElementById('community-tbody');
+  const countEl = document.getElementById('community-count');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:1rem">Laden...</td></tr>';
+  fetch(url).then(r => r.json()).then(data => {
+    const members = data.members || [];
+    tbody.innerHTML = '';
+    members.forEach((m, i) => {
+      const tier = m.vip_tier || 'none';
+      const tierColors = {gold:'#eab308',silver:'#94a3b8',bronze:'#d97706',none:'#6b7280'};
+      const tc = tierColors[tier] || '#6b7280';
+      const tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid var(--border)';
+      tr.innerHTML = '<td style="padding:.4rem">'+(i+1)+'</td>'+
+        '<td style="padding:.4rem;font-weight:500">'+(m.author_name||'—')+'</td>'+
+        '<td style="padding:.4rem">'+(m.total_comments||0)+'</td>'+
+        '<td style="padding:.4rem">'+(m.videos_commented_on||0)+'</td>'+
+        '<td style="padding:.4rem">'+(m.total_likes_received||0)+'</td>'+
+        '<td style="padding:.4rem;font-size:.75rem;color:var(--text2)">'+(m.last_seen||'—').substring(0,10)+'</td>'+
+        '<td style="padding:.4rem"><span style="background:'+tc+'22;color:'+tc+';padding:2px 8px;border-radius:4px;font-size:.7rem">'+tier+'</span></td>';
+      tbody.appendChild(tr);
+    });
+    countEl.textContent = members.length + ' Mitglieder geladen';
+  }).catch(err => {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444">Fehler: '+err.message+'</td></tr>';
+  });
+}
+
+// Kommentare-Tab
+let commentsData = null;
+
+function switchCommentSub(sub) {
+  document.querySelectorAll('.yt-subtab[data-csub]').forEach(b => b.classList.toggle('active', b.dataset.csub === sub));
+  const tbody = document.getElementById('comments-tbody');
+  const countEl = document.getElementById('comments-count');
+  const statsEl = document.getElementById('comments-stats');
+
+  if (!commentsData) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:1rem">Laden...</td></tr>';
+    fetch('/api/hestia/comments').then(r => r.json()).then(data => {
+      commentsData = data;
+      renderComments(sub);
+    }).catch(err => {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444">Fehler: '+err.message+'</td></tr>';
+    });
+  } else {
+    renderComments(sub);
+  }
+}
+
+function renderComments(sub) {
+  const tbody = document.getElementById('comments-tbody');
+  const countEl = document.getElementById('comments-count');
+  const statsEl = document.getElementById('comments-stats');
+  const comments = sub === 'vip' ? (commentsData.vip_pending || []) : (commentsData.recent || []);
+  const stats = commentsData.stats || {};
+
+  // Stats
+  statsEl.innerHTML =
+    '<span style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:4px;font-size:.8rem">📊 Gesamt: <b>'+(stats.total|| Object.values(stats).reduce((a,b)=>a+b,0))+'</b></span>'+
+    '<span style="background:#eab30822;color:#eab308;padding:4px 10px;border-radius:4px;font-size:.8rem">⏳ Pending: <b>'+(stats.pending||0)+'</b></span>'+
+    '<span style="background:#22c55e22;color:#22c55e;padding:4px 10px;border-radius:4px;font-size:.8rem">✅ Replied: <b>'+(stats.replied||0)+'</b></span>';
+
+  tbody.innerHTML = '';
+  if (!comments.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:2rem">Keine Kommentare</td></tr>';
+    countEl.textContent = '';
+    return;
+  }
+  comments.forEach((c, i) => {
+    const statusColors = {pending:'#eab308',replied:'#22c55e',new:'#3b82f6'};
+    const sc = statusColors[c.status] || '#6b7280';
+    const isReplied = c.status === 'replied';
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid var(--border)';
+    tr.innerHTML = '<td style="padding:.4rem">'+(i+1)+'</td>'+
+      '<td style="padding:.4rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(c.video_title||'—')+'</td>'+
+      '<td style="padding:.4rem;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(c.text||'—')+'</td>'+
+      '<td style="padding:.4rem;font-weight:500">'+(c.author||'—')+'</td>'+
+      '<td style="padding:.4rem;font-size:.75rem;color:var(--text2)">'+(c.published_at||'—').substring(0,10)+'</td>'+
+      '<td style="padding:.4rem"><span style="background:'+sc+'22;color:'+sc+';padding:2px 8px;border-radius:4px;font-size:.75rem">'+(c.status||'—')+'</span></td>'+
+      '<td style="padding:.4rem;text-align:center">'+(isReplied ? '<span class="reply-sent">✅ beantwortet</span>' : '<button class="btn" style="padding:2px 8px;font-size:.8rem" onclick="openReplyDropdown('+c.id+',event)">💬</button>')+'</td>';
+    tbody.appendChild(tr);
+  });
+  countEl.textContent = comments.length + ' Kommentare';
+}
+
+// === REPLY SYSTEM ===
+function openReplyDropdown(commentId, event) {
+  event.stopPropagation();
+  activeReplyCommentId = commentId;
+  const dropdown = document.getElementById('reply-dropdown');
+  const suggEl = document.getElementById('reply-suggestions');
+  const inputEl = document.getElementById('reply-custom-input');
+
+  // Position near click
+  const rect = event.target.getBoundingClientRect();
+  dropdown.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+  dropdown.style.left = Math.min(rect.left, window.innerWidth - 320) + 'px';
+  dropdown.style.display = 'block';
+  inputEl.value = '';
+
+  // Fetch suggestions
+  suggEl.innerHTML = '<div style="color:var(--text2);font-size:.8rem">Generiere Vorschläge...</div>';
+  fetch('/api/hestia/comments/' + commentId + '/suggestions').then(r => r.json()).then(data => {
+    const suggestions = data.suggestions || [];
+    if (!suggestions.length) {
+      suggEl.innerHTML = '<div style="color:var(--text2);font-size:.8rem">Keine Vorschläge verfügbar</div>';
+      return;
+    }
+    suggEl.innerHTML = suggestions.map((s, i) =>
+      '<button class="suggestion-btn" onclick="sendSuggestedReply(\'' + s.replace(/'/g, "\\'") + '\')">' + (i+1) + '. ' + s + '</button>'
+    ).join('');
+  }).catch(err => {
+    suggEl.innerHTML = '<div style="color:#ef4444;font-size:.8rem">Fehler: ' + err.message + '</div>';
+  });
+}
+
+function closeReplyDropdown() {
+  document.getElementById('reply-dropdown').style.display = 'none';
+  activeReplyCommentId = null;
+}
+
+function sendSuggestedReply(text) {
+  if (!activeReplyCommentId) return;
+  sendReplyToServer(activeReplyCommentId, text);
+}
+
+function sendCustomReply() {
+  const text = document.getElementById('reply-custom-input').value;
+  if (!text.trim() || !activeReplyCommentId) return;
+  sendReplyToServer(activeReplyCommentId, text);
+}
+
+function sendReplyToServer(commentId, text) {
+  fetch('/api/hestia/comments/' + commentId + '/reply', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({text: text})
+  }).then(r => r.json()).then(data => {
+    if (data.status === 'success') {
+      closeReplyDropdown();
+      commentsData = null; // Force reload
+      switchCommentSub('recent');
+    } else {
+      alert('Fehler: ' + (data.message || 'Unbekannt'));
+    }
+  }).catch(err => {
+    alert('Fehler: ' + err.message);
+  });
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+  const dropdown = document.getElementById('reply-dropdown');
+  if (dropdown.style.display !== 'none' && !dropdown.contains(e.target) && !e.target.classList.contains('btn')) {
+    closeReplyDropdown();
+  }
+});
+</script>
+{% endblock %}
